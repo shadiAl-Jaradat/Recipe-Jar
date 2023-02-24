@@ -1,5 +1,4 @@
 import unicodedata
-
 from .serializer import IngredientSerializer, RecipeSerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory
 from pytube import YouTube
@@ -16,6 +15,12 @@ from quantulum3 import parser
 from ingredient_parser.en import parse
 import re
 import spacy
+from django.shortcuts import render
+
+
+def home(request):
+    context = {'title': 'Whisk App'}
+    return render(request, 'whiskTemplates/home.html', context)
 
 
 def get_video(query):

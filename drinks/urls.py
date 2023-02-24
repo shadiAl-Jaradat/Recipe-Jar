@@ -18,6 +18,7 @@ from django.urls import path, include
 from drinks import views
 
 urlpatterns = [
+    path('', views.home, name='home'),
     path('admin/', admin.site.urls),
     path('createUser/', views.create_user, name="firstName=string, lastName=string, phoneNumber=string, age=int, dateOfBirth=DateTime, weight=float, height=float,"),
     path('sendAndGetMyName/<str:name>/', views.send_name,),
