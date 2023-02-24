@@ -16,7 +16,6 @@ from quantulum3 import parser
 from ingredient_parser.en import parse
 import re
 import spacy
-from py4j.java_gateway import JavaGateway
 
 
 def get_video(query):
