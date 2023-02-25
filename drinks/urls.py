@@ -20,7 +20,7 @@ from drinks import views
 urlpatterns = [
     path('', views.home, name='home'),
     path('admin/', admin.site.urls),
-    path('createUser/', views.create_user, name="firstName=string, lastName=string, phoneNumber=string, age=int, dateOfBirth=DateTime, weight=float, height=float,"),
+    path('createUser/', views.create_user, name=""),
     path('sendAndGetMyName/<str:name>/', views.send_name,),
     path('whiskApp/getOriginRecipeInfo/', views.recipe_information_origin, name='website_url'),
     path('whiskApp/getCustomizedRecipeInfo/', views.recipe_information_customized, name="website_url"),
