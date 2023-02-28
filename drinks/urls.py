@@ -22,8 +22,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('createUser/', views.create_user, name=""),
     path('sendAndGetMyName/<str:name>/', views.send_name,),
-    path('whiskApp/getOriginRecipeInfo/', views.recipe_information_origin, name='website_url'),
-    path('whiskApp/getCustomizedRecipeInfo/', views.recipe_information_customized, name="website_url"),
     path('whiskApp/webExtension/getRecipeInformation/', views.recipe_information_customized_last_version, name="website_url"),
     path('YoutubeVideo/', views.get_video),
     path('GetIngredientsDetails/', views.ingredients_details)
