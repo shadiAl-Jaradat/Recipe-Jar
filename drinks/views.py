@@ -23,74 +23,6 @@ def home(request):
     return render(request, 'whiskTemplates/home.html', context)
 
 
-def get_video(query):
-    api_key = 'AIzaSyC1xBiPhp9D2UIh4dIeGjlex90s3BZ5me4'
-    youtube = build('youtube', 'v3', developerKey=api_key)
-    search_response = youtube.search().list(
-        q=query + ' recipe',
-        type='video',
-        part='id,snippet',
-        maxResults=30
-    ).execute()
-    max_views = 0
-    link_of_max_views = ""
-    title_of_max_views = ""
-    image_of_max_views = ""
-    for search_result in search_response.get('items', []):
-        video_id = search_result['id']['videoId']
-        video_url = f'https://www.youtube.com/watch?v={video_id}'
-        video = YouTube(video_url)
-        if video.views > max_views:
-            max_views = video.views
-            link_of_max_views = video_url
-            title_of_max_views = video.title
-            image_of_max_views = video.thumbnail_url
-        else:
-            break
-    data = {
-        'youtubeLink': link_of_max_views,
-        'title': title_of_max_views,
-        'image': image_of_max_views
-    }
-    return data
-
-
-def convert_fraction(string):
-    if '½' in string:
-        fraction = unicodedata.numeric('½')
-        string = string.replace('½', str(fraction))
-    elif '¼' in string:
-        fraction = unicodedata.numeric('¼')
-        string = string.replace('¼', str(fraction))
-    return string
-
-
-@api_view(['POST'])
-def ingredients_details(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        ingredient = data['ingredient']
-        quants = parser.parse(ingredient)
-        ingredient_parce_name = parse(convert_fraction(ingredient))
-
-        data = {
-            'name': ingredient_parce_name['name'],
-            'quantity': quants[0].value,
-            'unit': quants[0].unit.name,
-        }
-        return JsonResponse(data)
-    else:
-        return HttpResponseBadRequest("Bad Request: Only GET requests are allowed")
-
-
-@api_view(['GET'])
-def send_name(request, name):
-    if request.method == 'GET':
-        return JsonResponse({"name": name})
-    else:
-        return HttpResponseBadRequest("Bad Request: Only GET requests are allowed")
-
-
 @api_view(['POST'])
 def create_user(request):
     if request.method == 'POST':
@@ -195,28 +127,7 @@ def save_recipe(request):
 
 
 @api_view(['POST'])
-def recipe_information_customized(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            website_url = data['website_url']
-            scraper = scrape_me(website_url)
-            data = {
-                'title': scraper.title(),
-                'time': scraper.total_time(),
-                'picture_url': scraper.image(),
-                'is_editor_choice': True,
-                'ingredients': scraper.ingredients()
-            }
-            return JsonResponse(data)
-        except:
-            return HttpResponseBadRequest("Bad Request: Invalid request body")
-    else:
-        return HttpResponseBadRequest("Bad Request: Only POST requests are allowed")
-
-
-@api_view(['POST'])
-def recipe_information_customized_last_version(request):
+def get_recipe_information_web_extension(request):
     try:
         data = json.loads(request.body)
         website_url = data['websiteUrl']
@@ -271,45 +182,69 @@ def recipe_information_customized_last_version(request):
         return HttpResponseBadRequest("Scraping not supported for this URL")
 
 
-# @api_view(['POST'])
-# def recipe_information_customized_two(request):
-#     if request.method == 'POST':
-#         data = json.loads(request.body)
-#         website_url = data['website_url']
-#         scraper = scrape_me(website_url)
-#         temp_recipe = Recipe.objects.create(
-#             name=scraper.title(),
-#             time=scraper.total_time(),
-#             picture_url=scraper.image(),
-#             scale=3,
-#             is_editor_choice=False
-#         )
-#
-#         list_ingredient = scraper.ingredients()
-#         for ingredient in list_ingredient:
-#             temp_ingredient = Ingredient.objects.create(
-#                 name=ingredient,
-#                 recipe=temp_recipe,
-#             )
-#
-#         ingredients = Ingredient.objects.filter(recipe=temp_recipe)
-#         ingredients_data = []
-#         for ingredient in ingredients:
-#             ingredients_data.append({
-#                 'name': ingredient.name,
-#             })
-#
-#         data = {
-#             'name': temp_recipe.name,
-#             'time': temp_recipe.time,
-#             'picture_url': temp_recipe.picture_url,
-#             'scale': temp_recipe.scale,
-#             'is_editor_choice': temp_recipe.is_editor_choice,
-#             'ingredients': ingredients_data
-#         }
-#         return JsonResponse(data)
-#     else:
-#         return HttpResponseBadRequest("Bad Request: Only POST requests are allowed")
+def get_video(query):
+    api_key = 'AIzaSyC1xBiPhp9D2UIh4dIeGjlex90s3BZ5me4'
+    youtube = build('youtube', 'v3', developerKey=api_key)
+    search_response = youtube.search().list(
+        q=query + ' recipe',
+        type='video',
+        part='id,snippet',
+        maxResults=30
+    ).execute()
+    max_views = 0
+    link_of_max_views = ""
+    title_of_max_views = ""
+    image_of_max_views = ""
+    for search_result in search_response.get('items', []):
+        video_id = search_result['id']['videoId']
+        video_url = f'https://www.youtube.com/watch?v={video_id}'
+        video = YouTube(video_url)
+        if video.views > max_views:
+            max_views = video.views
+            link_of_max_views = video_url
+            title_of_max_views = video.title
+            image_of_max_views = video.thumbnail_url
+        else:
+            break
+    data = {
+        'youtubeLink': link_of_max_views,
+        'title': title_of_max_views,
+        'image': image_of_max_views
+    }
+    return data
+
+
+def convert_fraction(string):
+    if '½' in string:
+        fraction = unicodedata.numeric('½')
+        string = string.replace('½', str(fraction))
+    elif '¼' in string:
+        fraction = unicodedata.numeric('¼')
+        string = string.replace('¼', str(fraction))
+    return string
+
+
+# these all functions/views not used for now
+
+@api_view(['POST'])
+def recipe_information_customized(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            website_url = data['website_url']
+            scraper = scrape_me(website_url)
+            data = {
+                'title': scraper.title(),
+                'time': scraper.total_time(),
+                'picture_url': scraper.image(),
+                'is_editor_choice': True,
+                'ingredients': scraper.ingredients()
+            }
+            return JsonResponse(data)
+        except:
+            return HttpResponseBadRequest("Bad Request: Invalid request body")
+    else:
+        return HttpResponseBadRequest("Bad Request: Only POST requests are allowed")
 
 
 @api_view(['POST'])
@@ -325,3 +260,29 @@ def recipe_information_origin(request):
             return HttpResponseBadRequest("Bad Request: Invalid request body")
     else:
         return HttpResponseBadRequest("Bad Request: Only POST requests are allowed")
+
+
+@api_view(['POST'])
+def ingredients_details(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        ingredient = data['ingredient']
+        quants = parser.parse(ingredient)
+        ingredient_parce_name = parse(convert_fraction(ingredient))
+
+        data = {
+            'name': ingredient_parce_name['name'],
+            'quantity': quants[0].value,
+            'unit': quants[0].unit.name,
+        }
+        return JsonResponse(data)
+    else:
+        return HttpResponseBadRequest("Bad Request: Only GET requests are allowed")
+
+
+@api_view(['GET'])
+def send_name(request, name):
+    if request.method == 'GET':
+        return JsonResponse({"name": name})
+    else:
+        return HttpResponseBadRequest("Bad Request: Only GET requests are allowed")
