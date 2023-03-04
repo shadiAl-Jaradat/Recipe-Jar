@@ -71,15 +71,11 @@ def get_all_categories(request):
     user_id = request.data.get('userID')
     if not user_id:
         return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Get the user instance by user_id
     try:
         user = User.objects.get(pk=user_id)
     except User.DoesNotExist:
         return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
-    # Get all RecipeCategory instances for the specified user
     categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
-    # Serialize the list of categories
     serializer = RecipeCategorySerializer(categories, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -131,6 +127,14 @@ def get_recipe_information_web_extension(request):
     try:
         data = json.loads(request.body)
         website_url = data['websiteUrl']
+        user_id = data['userID']
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
+        serializer = RecipeCategorySerializer(categories, many=True)
+
         scraper = scrape_me(website_url)
 
         ingredients = []
@@ -177,7 +181,12 @@ def get_recipe_information_web_extension(request):
             'ingredients': ingredients,
             'steps': steps
         }
-        return Response(recipe_data, status=status.HTTP_201_CREATED, )
+
+        all_data = {
+            'recipeData': recipe_data,
+            "categories": serializer.data
+        }
+        return Response(all_data, status=status.HTTP_201_CREATED, )
     except:
         return HttpResponseBadRequest("Scraping not supported for this URL")
 
