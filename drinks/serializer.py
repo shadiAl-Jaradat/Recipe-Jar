@@ -13,22 +13,22 @@ class UserSerializer(serializers.ModelSerializer):
 class RecipeCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeCategory
-        fields = ['name']
+        fields = ['id', 'name']
 
 
 class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
-        fields = ['name', 'time', 'picture_url', 'is_editor_choice']
+        fields = ['id', 'name', 'time', 'picture_url', 'is_editor_choice']
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ['name', 'quantity', 'unit']
+        fields = ['id', 'name', 'quantity', 'unit']
 
 
 class StepSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ['description', 'orderID']
+        fields = ['id', 'description', 'orderID']

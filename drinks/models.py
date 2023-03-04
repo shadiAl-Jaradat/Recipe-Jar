@@ -18,6 +18,7 @@ class User(models.Model):
 
 
 class RecipeCategory(models.Model):
+    id = models.UUIDField(primary_key=True)
     name = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipeCategories')
     orderID = models.PositiveIntegerField()
@@ -27,6 +28,7 @@ class RecipeCategory(models.Model):
 
 
 class Recipe(models.Model):
+    id = models.UUIDField(primary_key=True)
     title = models.CharField(max_length=100)
     time = models.PositiveIntegerField(null=True)
     pictureUrl = models.CharField(max_length=500, null=True)
@@ -40,6 +42,7 @@ class Recipe(models.Model):
 
 
 class Ingredient(models.Model):
+    id = models.UUIDField(primary_key=True)
     name = models.CharField(max_length=100)
     quantity = models.FloatField(null=True)
     unit = models.CharField(max_length=100)
@@ -52,6 +55,7 @@ class Ingredient(models.Model):
 
 
 class Step(models.Model):
+    id = models.UUIDField(primary_key=True)
     description = models.CharField(max_length=500)
     orderID = models.PositiveIntegerField(null=True)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='steps')
