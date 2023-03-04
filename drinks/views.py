@@ -1,5 +1,5 @@
 import unicodedata
-from .serializer import IngredientSerializer, RecipeSerializer
+from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory
 from pytube import YouTube
 from googleapiclient.discovery import build
@@ -136,7 +136,20 @@ def create_recipe_category(request):
 
 @api_view(['POST'])
 def get_all_categories(request):
-    return JsonResponse({'message': 'habal '})
+    user_id = request.data.get('userID')
+    if not user_id:
+        return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Get the user instance by user_id
+    try:
+        user = User.objects.get(pk=user_id)
+    except User.DoesNotExist:
+        return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+    # Get all RecipeCategory instances for the specified user
+    categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
+    # Serialize the list of categories
+    serializer = RecipeCategorySerializer(categories, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])

@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
 class RecipeCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeCategory
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'orderID']
 
 
 class RecipeSerializer(serializers.ModelSerializer):
