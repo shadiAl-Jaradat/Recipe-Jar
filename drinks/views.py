@@ -136,6 +136,7 @@ def create_recipe_category(request):
 
 @api_view(['POST'])
 def get_all_categories(request):
+    return JsonResponse({'message': 'habal '})
 
 
 @api_view(['POST'])
