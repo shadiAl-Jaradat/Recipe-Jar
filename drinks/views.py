@@ -135,6 +135,10 @@ def create_recipe_category(request):
 
 
 @api_view(['POST'])
+def get_all_categories(request):
+
+
+@api_view(['POST'])
 def save_recipe(request):
     if request.method == 'POST':
         data = json.loads(request.body)
