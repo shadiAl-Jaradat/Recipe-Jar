@@ -24,7 +24,7 @@ class RecipeCategory(models.Model):
     orderID = models.PositiveIntegerField()
 
     def __str__(self):
-        return self.id
+        return self.name
 
 
 class Recipe(models.Model):
@@ -38,7 +38,7 @@ class Recipe(models.Model):
     orderID = models.PositiveIntegerField()
 
     def __str__(self):
-        return self.id
+        return self.title
 
 
 class Ingredient(models.Model):
@@ -51,7 +51,7 @@ class Ingredient(models.Model):
 
     @property
     def __str__(self):
-        return self.id
+        return self.name
 
 
 class Step(models.Model):

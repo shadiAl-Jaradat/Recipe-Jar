@@ -23,4 +23,5 @@ urlpatterns = [
     path('createUser/', views.create_user, name=""),
     path('sendAndGetMyName/<str:name>/', views.send_name,),
     path('whiskApp/webExtension/getRecipeInformation/', views.recipe_information_customized_last_version, name="website_url"),
+    path('createRecipeCategory/', views.create_recipe_category)
 ]

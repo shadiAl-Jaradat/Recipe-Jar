@@ -111,6 +111,30 @@ def create_user(request):
 
 
 @api_view(['POST'])
+def create_recipe_category(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+
+        # reformat the data
+        category_uuid = uuid.uuid4()
+        name = data['name']
+        user_id = data['userID']
+        temp_user = User.objects.get(pk=user_id)
+        categories = RecipeCategory.objects.filter(user=temp_user).order_by('orderID')
+        order_id = len(categories) + 1
+
+        temp_category = RecipeCategory(
+            id=category_uuid,
+            name=name,
+            orderID=order_id,
+            user=temp_user
+        )
+
+        temp_category.save()
+        return JsonResponse({'message': 'Category created successfully'})
+
+
+@api_view(['POST'])
 def save_recipe(request):
     if request.method == 'POST':
         data = json.loads(request.body)
