@@ -41,11 +41,29 @@ class Recipe(models.Model):
         return self.title
 
 
+class Item(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    name = models.CharField(max_length=500)
+
+    @property
+    def __str__(self):
+        return self.name
+
+
+class Unit(models.Model):
+    id = models.PositiveIntegerField(primary_key=True)
+    name = models.CharField(max_length=500)
+
+    @property
+    def __str__(self):
+        return self.name
+
+
 class Ingredient(models.Model):
     id = models.UUIDField(primary_key=True)
-    name = models.CharField(max_length=100)
+    itemID = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='itemID')
     quantity = models.FloatField(null=True)
-    unit = models.CharField(max_length=100)
+    unitID = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='UnitID')
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ingredients')
     orderNumber = models.PositiveIntegerField()
 
