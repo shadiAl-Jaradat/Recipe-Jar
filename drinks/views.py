@@ -144,7 +144,7 @@ def get_recipe_information_web_extension(request):
         for ingredient in scraper.ingredients():
             quants = parser.parse(ingredient)
             if quants.__len__() == 0:
-                quantity = ""
+                quantity = None
                 unit = ""
             else:
                 quantity = quants[0].value
