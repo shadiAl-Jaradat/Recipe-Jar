@@ -183,7 +183,7 @@ def get_recipe_information_web_extension(request):
         }
 
         all_data = {
-            'recipeData': recipe_data,
+            'recipe': recipe_data,
             "categories": serializer.data
         }
         return Response(all_data, status=status.HTTP_201_CREATED, )
