@@ -3,7 +3,6 @@ from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySe
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item
 from pytube import YouTube
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,8 +12,6 @@ from recipe_scrapers import scrape_me
 from uuid import UUID, uuid4
 from quantulum3 import parser
 from ingredient_parser.en import parse
-import re
-import spacy
 from django.shortcuts import render
 
 
