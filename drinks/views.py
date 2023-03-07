@@ -82,7 +82,7 @@ def get_all_categories(request):
 
 @api_view(['POST'])
 def save_recipe_two(request):
-    global item_from_db, unit_from_db
+    # global item_from_db, unit_from_db
     if request.method == 'POST':
         try:
             # Parse the request body
