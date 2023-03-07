@@ -7,40 +7,40 @@ from .models import User, Recipe, RecipeCategory, Ingredient, Step
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'name', 'time', 'picture_url', 'is_editor_choice']
+        fields = '__all__'
 
 
 class RecipeCategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeCategory
-        fields = ['id', 'name', 'orderID']
+        fields = '__all__'
 
 
 class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
-        fields = ['id', 'name', 'time', 'picture_url', 'is_editor_choice']
+        fields = '__all__'
 
 
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ['id', 'ItemID', 'quantity', 'unitID']
+        fields = '__all__'
 
 
 class StepSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Ingredient
-        fields = ['id', 'description', 'orderID']
+        model = Step
+        fields = '__all__'
 
 
 class UnitSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ['id', 'name']
+        fields = '__all__'
 
 
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
-        fields = ['id', 'name']
+        fields = '__all__'

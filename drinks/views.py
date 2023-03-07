@@ -1,6 +1,6 @@
 import unicodedata
 from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer
-from .models import User, Recipe, Ingredient, Step, RecipeCategory
+from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item
 from pytube import YouTube
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
@@ -10,7 +10,7 @@ from rest_framework import status
 import json
 from django.http import JsonResponse, HttpResponseBadRequest
 from recipe_scrapers import scrape_me
-import uuid
+from uuid import UUID, uuid4
 from quantulum3 import parser
 from ingredient_parser.en import parse
 import re
@@ -27,7 +27,7 @@ def home(request):
 def create_user(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        user_uuid = uuid.uuid4()
+        user_uuid = uuid4()
         user = User(
             id=user_uuid,
             firstName=data['firstName'],
@@ -48,7 +48,7 @@ def create_recipe_category(request):
         data = json.loads(request.body)
 
         # reformat the data
-        category_uuid = uuid.uuid4()
+        category_uuid = uuid4()
         name = data['name']
         user_id = data['userID']
         temp_user = User.objects.get(pk=user_id)
@@ -81,45 +81,102 @@ def get_all_categories(request):
 
 
 @api_view(['POST'])
-def save_recipe(request):
+def save_recipe_two(request):
+    global item_from_db, unit_from_db
     if request.method == 'POST':
-        data = json.loads(request.body)
-        category_id = data.get('category_id')
-        recipe_data = data.get('recipe')
-        ingredients_data = data.get('ingredients')
-        steps_data = data.get('steps')
+        try:
+            # Parse the request body
+            data = json.loads(request.body)
+            category_id = UUID(data['categoryID'])
+            recipe_name = data['name']
+            time = data['time']
+            picture_url = data['pictureUrl']
+            video_url = data['videoUrl']['youtubeLink']
+            video_image = data['videoUrl']['image']
+            video_title = data['videoUrl']['title']
+            is_editor_choice = data['isEditorChoice']
+            ingredients = data['ingredients']
+            steps = data['steps']
 
-        category = RecipeCategory.objects.get(id=category_id)
-        recipe = Recipe.objects.create(
-            title=recipe_data.get('title'),
-            time=recipe_data.get('time'),
-            pictureUrl=recipe_data.get('pictureUrl'),
-            videoUrl=recipe_data.get('videoUrl'),
-            is_editor_choice=recipe_data.get('is_editor_choice'),
-            category=category,
-            orderID=recipe_data.get('orderID')
-        )
-        recipe.save()
+            # Check if the category exists in the database
+            category = RecipeCategory.objects.get(pk=category_id)
 
-        for ingredient in ingredients_data:
-            Ingredient.objects.create(
-                name=ingredient.get('name'),
-                quantity=ingredient.get('quantity'),
-                unit=ingredient.get('unit'),
-                recipe=recipe,
-                orderNumber=ingredient.get('orderNumber')
-            ).save()
+            # Get existing recipes in the same category
+            existing_recipes = Recipe.objects.filter(category=category)
 
-        for step in steps_data:
-            Step.objects.create(
-                description=step.get('description'),
-                orderID=step.get('orderID'),
-                recipe=recipe
-            ).save()
+            # Set the orderID for the new recipe
+            order_id = len(existing_recipes) + 1
+            # Create the recipe instance
+            recipe = Recipe(id=uuid4(), title=recipe_name, time=time, pictureUrl=picture_url,
+                            videoUrl=video_url, videoImage=video_image, videoTitle=video_title,
+                            is_editor_choice=is_editor_choice, category=category, orderID=order_id)
+            recipe.save()
 
-        return JsonResponse({'message': 'Recipe created successfully'})
-    else:
-        return JsonResponse({'message': 'Bad request'}, status=400)
+            # Loop over the ingredients and create their related models if they do not exist
+            for ingredient in ingredients:
+                item_name = ingredient['name']
+                quantity = ingredient['quantity']
+                unit_name = ingredient['unit']
+                order_id = ingredient['orderID']
+
+                # Check if the item exists in the database or create a new one
+                # items_length = Item.objects.count()
+                # item, created = Item.objects.get_or_create(id=items_length+1, name=item_name)
+                
+                try:
+                    item_from_db = Item.objects.get(name=item_name)
+                    item = item_from_db
+                except Item.DoesNotExist:
+                    items_length = Item.objects.count()
+                    item = Item(id=items_length + 1, name=item_name)
+                    item.save()
+
+                # if not item_from_db.DoesNotExist:
+                #     items_length = Item.objects.count()
+                #     item = Item(id=items_length + 1, name=item_name)
+                #     item.save()
+                # else:
+                #     item = item_from_db
+
+
+                # item = Item.objects.create(name=item_name)
+
+                # Check if the unit exists in the database or create a new on
+                if unit_name:
+                    try:
+                        unit_from_db = Unit.objects.get(name=unit_name)
+                        unit = unit_from_db
+                    except Unit.DoesNotExist:
+                        unit_length = Unit.objects.count()
+                        unit = Unit(id=unit_length + 1, name=unit_name)
+                        unit.save()
+                else:
+                    unit = None
+
+                ingredient_id = uuid4()
+                # Create the ingredient instance
+                ingredient = Ingredient(id=ingredient_id, itemID=item, quantity=quantity, unitID=unit,
+                                        recipe=recipe, orderNumber=order_id)
+                ingredient.save()
+
+            # Loop over the steps and create their related models
+            for step in steps:
+                description = step['name']
+                order_id = step['orderID']
+
+                # Create the step instance
+                step = Step(id=uuid4(), description=description, orderID=order_id, recipe=recipe)
+                step.save()
+
+            # Return a success response
+            return JsonResponse({'message': 'Recipe saved successfully.'}, status=201)
+
+        except (KeyError, ValueError, TypeError, RecipeCategory.DoesNotExist, Item.DoesNotExist):
+            # Return an error response if the request is not properly formatted or the category or item do not exist
+            return JsonResponse({'error': 'Invalid request.'}, status=400)
+
+    # Return an error response if the request method is not POST
+    return JsonResponse({'error': 'Invalid request method.'}, status=405)
 
 
 @api_view(['POST'])

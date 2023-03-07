@@ -33,8 +33,10 @@ class Recipe(models.Model):
     time = models.PositiveIntegerField(null=True)
     pictureUrl = models.CharField(max_length=500, null=True)
     videoUrl = models.CharField(max_length=500, null=True)
+    videoImage = models.CharField(max_length=500, null=True)
+    videoTitle = models.CharField(max_length=500, null=True)
     is_editor_choice = models.BooleanField(default=False)
-    category = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipes')
+    category = models.ForeignKey(RecipeCategory, on_delete=models.CASCADE, related_name='recipes')
     orderID = models.PositiveIntegerField()
 
     def __str__(self):
@@ -46,7 +48,7 @@ class Item(models.Model):
     name = models.CharField(max_length=500)
 
     @property
-    def __str__(self):
+    def __repr__(self):
         return self.name
 
 
@@ -55,7 +57,7 @@ class Unit(models.Model):
     name = models.CharField(max_length=500)
 
     @property
-    def __str__(self):
+    def __repr__(self):
         return self.name
 
 
@@ -63,13 +65,13 @@ class Ingredient(models.Model):
     id = models.UUIDField(primary_key=True)
     itemID = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='itemID')
     quantity = models.FloatField(null=True)
-    unitID = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='UnitID')
+    unitID = models.ForeignKey(Unit, on_delete=models.CASCADE, related_name='UnitID', null=True)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='ingredients')
     orderNumber = models.PositiveIntegerField()
 
     @property
-    def __str__(self):
-        return self.name
+    def __repr__(self):
+        return self.id
 
 
 class Step(models.Model):
@@ -79,7 +81,7 @@ class Step(models.Model):
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE, related_name='steps')
 
     @property
-    def __str__(self):
+    def __repr__(self):
         return self.id
 
 
