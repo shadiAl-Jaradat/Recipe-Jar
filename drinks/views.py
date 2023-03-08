@@ -78,6 +78,19 @@ def get_all_categories(request):
 
 
 @api_view(['POST'])
+def get_all_recipes(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        category_id = UUID(data['categoryID'])
+        category = RecipeCategory.objects.get(pk=category_id)
+        recipes = Recipe.objects.filter(category=category)
+        serialized_recipes = RecipeSerializer(recipes, many=True)
+        return Response(serialized_recipes.data, status=status.HTTP_200_OK)
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+
+@api_view(['POST'])
 def save_recipe_two(request):
     # global item_from_db, unit_from_db
     if request.method == 'POST':

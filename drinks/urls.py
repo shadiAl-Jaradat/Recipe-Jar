@@ -10,5 +10,6 @@ urlpatterns = [
     path('whiskApp/webExtension/getRecipeInformation/', views.get_recipe_information_web_extension, name="website_url"),
     path('createRecipeCategory/', views.create_recipe_category),
     path('getAllCategories/', views.get_all_categories),
-    path('whiskApp/webExtension/saveRecipeInfo/', views.save_recipe_two)
+    path('whiskApp/webExtension/saveRecipeInfo/', views.save_recipe_two),
+    path('getAllRecipes/', views.get_all_recipes),
 ]
