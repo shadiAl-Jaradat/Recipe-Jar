@@ -1,5 +1,6 @@
 import unicodedata
-from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer
+from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
+    ItemSerializer, UnitSerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item
 from pytube import YouTube
 from googleapiclient.discovery import build
@@ -86,6 +87,72 @@ def get_all_recipes(request):
         recipes = Recipe.objects.filter(category=category)
         serialized_recipes = RecipeSerializer(recipes, many=True)
         return Response(serialized_recipes.data, status=status.HTTP_200_OK)
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+
+@api_view(['POST'])
+def get_recipe_data(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        recipe_id = UUID(data['RecipeID'])
+        recipe = Recipe.objects.get(pk=recipe_id)
+
+        ingredients = Ingredient.objects.filter(recipe=recipe)
+        serialized_ingredients = IngredientSerializer(ingredients, many=True)
+
+        steps = Step.objects.filter(recipe=recipe)
+        serialized_steps = StepSerializer(steps, many=True)
+
+        # list_ingredients = serialized_ingredients.data
+        list_ingredients = []
+
+        for ingredient in serialized_ingredients.data:
+
+            item_id = ingredient['itemID']
+            item_from_db = Item.objects.get(id=item_id)
+            # serialized_item = ItemSerializer(item_from_db, many=True)
+
+            quantity = ingredient['quantity']
+
+            unit_name = ""
+            if ingredient['unitID']:
+                unit_id = ingredient['unitID']
+                unit_from_db = Unit.objects.get(id=unit_id)
+                unit_name = unit_from_db.name
+            else:
+                unit_name = None
+
+            # serialized_unit = UnitSerializer(unit_from_db, many=True)
+
+            order_id = ingredient['orderNumber']
+
+            list_ingredients.append(
+                {
+                    'name': item_from_db.name,
+                    'quantity': quantity,
+                    'unit': unit_name,
+                    'orderNumber': order_id
+                }
+            )
+
+        list_steps = []
+        for step in serialized_steps.data:
+            step_description = step['description']
+            step_order_id = step['orderID']
+            list_steps.append(
+                {
+                    'description': step_description,
+                    'orderID': step_order_id,
+                }
+            )
+
+        data = {
+            'ingredients': list_ingredients,
+            'steps': list_steps,
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=405)
 
