@@ -25,9 +25,8 @@ def home(request):
 def create_user(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        user_uuid = uuid4()
         user = User(
-            id=user_uuid,
+            id= UUID(data['userID']),
             firstName=data['firstName'],
             lastName=data['lastName'],
             phoneNumber=data['phoneNumber'],
