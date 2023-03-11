@@ -8,6 +8,11 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
+        extra_kwargs = {
+            'firstName': {'required': False},
+            'phoneNumber': {'required': False},
+            'lastName': {'required': False},
+        }
 
 
 class RecipeCategorySerializer(serializers.ModelSerializer):

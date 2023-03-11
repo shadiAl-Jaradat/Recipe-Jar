@@ -1,6 +1,6 @@
 import unicodedata
 from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
-    ItemSerializer, UnitSerializer
+    ItemSerializer, UnitSerializer, UserSerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item
 from pytube import YouTube
 from googleapiclient.discovery import build
@@ -26,7 +26,7 @@ def create_user(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         user = User(
-            id= UUID(data['userID']),
+            id=UUID(data['userID']),
             firstName=data['firstName'],
             lastName=data['lastName'],
             phoneNumber=data['phoneNumber'],
@@ -37,6 +37,26 @@ def create_user(request):
         )
         user.save()
         return JsonResponse({'message': 'User created successfully'})
+
+
+@api_view(['POST'])
+def update_user_data(request):
+    if request.method == 'POST':
+        user_id = request.data.get('id')
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
