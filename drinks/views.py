@@ -84,6 +84,8 @@ def create_recipe_category(request):
 
         temp_category.save()
         return JsonResponse({'message': 'Category created successfully'})
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -96,20 +98,36 @@ def rename_recipe_category(request):
         category.save()
         serializer = RecipeCategorySerializer(category)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def delete_recipe_category(request):
+    if request.method == 'POST':
+        category_id = request.data.get('id')
+        category = get_object_or_404(RecipeCategory, id=category_id)
+        category.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 def get_all_categories(request):
-    user_id = request.data.get('userID')
-    if not user_id:
-        return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
-    try:
-        user = User.objects.get(pk=user_id)
-    except User.DoesNotExist:
-        return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
-    categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
-    serializer = RecipeCategorySerializer(categories, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+    if request.method == 'POST':
+        user_id = request.data.get('userID')
+        if not user_id:
+            return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
+        serializer = RecipeCategorySerializer(categories, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
