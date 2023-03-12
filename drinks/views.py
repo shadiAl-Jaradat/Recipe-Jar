@@ -1,4 +1,7 @@
 import unicodedata
+
+from rest_framework.generics import get_object_or_404
+
 from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
     ItemSerializer, UnitSerializer, UserSerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item
@@ -81,6 +84,18 @@ def create_recipe_category(request):
 
         temp_category.save()
         return JsonResponse({'message': 'Category created successfully'})
+
+
+@api_view(['POST'])
+def rename_recipe_category(request):
+    if request.method == 'POST':
+        category_id = request.data.get('id')
+        new_name = request.data.get('newName')
+        category = get_object_or_404(RecipeCategory, id=category_id)
+        category.name = new_name
+        category.save()
+        serializer = RecipeCategorySerializer(category)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
