@@ -20,5 +20,6 @@ urlpatterns = [
     path('deleteRecipeCategory/', views.delete_recipe_category),
     # recipe Apis
     path('getAllRecipes/', views.get_all_recipes),
-    path('getRecipeData/', views.get_recipe_data)
+    path('getRecipeData/', views.get_recipe_data),
+    path('deleteRecipe/', views.delete_recipe)
 ]

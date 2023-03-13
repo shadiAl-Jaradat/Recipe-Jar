@@ -108,7 +108,18 @@ def delete_recipe_category(request):
         category_id = request.data.get('id')
         category = get_object_or_404(RecipeCategory, id=category_id)
         category.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response({'message': ' Recipe Category deleted :( '}, status=status.HTTP_204_NO_CONTENT)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def delete_recipe(request):
+    if request.method == 'POST':
+        recipe_id = request.data.get('id')
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        recipe.delete()
+        return Response({'message': ' Recipe deleted :( '}, status=status.HTTP_204_NO_CONTENT)
     else:
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
