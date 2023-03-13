@@ -3,7 +3,7 @@ import unicodedata
 from rest_framework.generics import get_object_or_404
 
 from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
-    ItemSerializer, UnitSerializer, UserSerializer
+    ItemSerializer, UnitSerializer, UserSerializer, ShoppingListCategorySerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory
 from pytube import YouTube
 from googleapiclient.discovery import build
@@ -125,7 +125,7 @@ def delete_recipe(request):
 
 
 @api_view(['POST'])
-def get_all_categories(request):
+def get_all_recipe_categories(request):
     if request.method == 'POST':
         user_id = request.data.get('userID')
         if not user_id:
@@ -479,6 +479,24 @@ def rename_shopping_list_category(request):
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def get_all_shopping_list_categories(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user_id = data['userID']
+        if not user_id:
+            return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        categories = ShoppingListCategory.objects.filter(user=user).order_by('orderID')
+        serializer = ShoppingListCategorySerializer(categories, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # these all functions/views not used for now
