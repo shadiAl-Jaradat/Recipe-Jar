@@ -453,7 +453,7 @@ def create_shopping_list_category(request):
         temp_category.save()
         return JsonResponse({'message': 'Shopping List Category created successfully'})
     else:
-        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -464,11 +464,21 @@ def delete_shopping_list_category(request):
         category.delete()
         return Response({'message': ' Shopping list Category deleted :( '}, status=status.HTTP_204_NO_CONTENT)
     else:
-        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
+@api_view(['POST'])
+def rename_shopping_list_category(request):
+    if request.method == 'POST':
+        category_id = request.data.get('id')
+        new_name = request.data.get('newName')
+        category = get_object_or_404(ShoppingListCategory, id=category_id)
+        category.name = new_name
+        category.save()
+        serializer = RecipeCategorySerializer(category)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    else:
+        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # these all functions/views not used for now

@@ -24,5 +24,6 @@ urlpatterns = [
     path('deleteRecipe/', views.delete_recipe),
     # Shopping List Category
     path('createShoppingListCategory/', views.create_shopping_list_category),
-    path('deleteShoppingListCategory/', views.delete_shopping_list_category)
+    path('deleteShoppingListCategory/', views.delete_shopping_list_category),
+    path('renameShoppingListCategory/', views.rename_shopping_list_category)
 ]
