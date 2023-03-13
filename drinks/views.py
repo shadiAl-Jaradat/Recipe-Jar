@@ -4,7 +4,7 @@ from rest_framework.generics import get_object_or_404
 
 from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
     ItemSerializer, UnitSerializer, UserSerializer
-from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item
+from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory
 from pytube import YouTube
 from googleapiclient.discovery import build
 from rest_framework.decorators import api_view
@@ -428,6 +428,41 @@ def convert_fraction(string):
         fraction = unicodedata.numeric('¼')
         string = string.replace('¼', str(fraction))
     return string
+
+
+@api_view(['POST'])
+def create_shopping_list_category(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+
+        # reformat the data
+        category_uuid = uuid4()
+        name = data['name']
+        user_id = data['userID']
+        temp_user = User.objects.get(pk=user_id)
+        shopping_list_categories = ShoppingListCategory.objects.filter(user=temp_user).order_by('orderID')
+        order_id = len(shopping_list_categories) + 1
+
+        temp_category = ShoppingListCategory(
+            id=category_uuid,
+            name=name,
+            orderID=order_id,
+            user=temp_user
+        )
+
+        temp_category.save()
+        return JsonResponse({'message': 'Shopping List Category created successfully'})
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
+
+
+
 
 
 # these all functions/views not used for now

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Recipe, RecipeCategory, Ingredient, Step
+from .models import User, Recipe, RecipeCategory, Ingredient, Step, ShoppingListCategory, ShoppingListItem
 
 
 # ALL THESE Serializers FOR WHISK APP #########################
@@ -49,3 +49,16 @@ class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = '__all__'
+
+
+class ShoppingListCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShoppingListCategory
+        fields = "__all__"
+
+
+class ShoppingListItemSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ShoppingListItem
+        fields = "__all__"

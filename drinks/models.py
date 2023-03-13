@@ -85,11 +85,26 @@ class Step(models.Model):
         return self.id
 
 
+class ShoppingListCategory(models.Model):
+    id = models.UUIDField(primary_key=True)
+    name = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shoppingListCategories')
+    orderID = models.PositiveIntegerField()
+
+    def __str__(self):
+        return self.name
 
 
+class ShoppingListItem(models.Model):
+    id = models.UUIDField(primary_key=True)
+    itemID = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='item_id')
+    categoryID = models.ForeignKey(ShoppingListCategory, on_delete=models.CASCADE, related_name='items')
+    isCheck = models.BooleanField(default=False)
+    orderNumber = models.PositiveIntegerField()
 
-
-
+    @property
+    def __repr__(self):
+        return self.id
 
 
 
