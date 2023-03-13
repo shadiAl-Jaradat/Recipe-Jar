@@ -456,9 +456,15 @@ def create_shopping_list_category(request):
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
-
-
+@api_view(['POST'])
+def delete_shopping_list_category(request):
+    if request.method == 'POST':
+        category_id = request.data.get('id')
+        category = get_object_or_404(ShoppingListCategory, id=category_id)
+        category.delete()
+        return Response({'message': ' Shopping list Category deleted :( '}, status=status.HTTP_204_NO_CONTENT)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
