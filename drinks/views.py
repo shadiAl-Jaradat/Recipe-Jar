@@ -83,7 +83,8 @@ def create_recipe_category(request):
         )
 
         temp_category.save()
-        return JsonResponse({'message': 'Category created successfully'})
+        serialized_steps = RecipeCategorySerializer(temp_category)
+        return JsonResponse(serialized_steps.data)
     else:
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
