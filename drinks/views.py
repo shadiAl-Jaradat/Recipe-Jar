@@ -1,7 +1,10 @@
 import unicodedata
 
+import self as self
+from django.db.models import Window
+from django.db.models import F
+from django.db.models.functions import RowNumber
 from rest_framework.generics import get_object_or_404
-
 from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
     ItemSerializer, UnitSerializer, UserSerializer, ShoppingListCategorySerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory
@@ -9,7 +12,7 @@ from pytube import YouTube
 from googleapiclient.discovery import build
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, serializers
 import json
 from django.http import JsonResponse, HttpResponseBadRequest
 from recipe_scrapers import scrape_me
@@ -17,7 +20,7 @@ from uuid import UUID, uuid4
 from quantulum3 import parser
 from ingredient_parser.en import parse
 from django.shortcuts import render
-
+from typing import TypeVar
 
 def home(request):
     context = {'title': 'Whisk App'}
@@ -133,11 +136,30 @@ def get_all_recipe_categories(request):
             return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
+        except:
             return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
-        categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
-        serializer = RecipeCategorySerializer(categories, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        categories = RecipeCategory.objects.annotate(
+            orderIDNEW=Window(
+                expression=RowNumber(),
+                order_by=F('orderID').asc()
+            )
+        ).filter(user=user_id).order_by('orderID')
+        categories = categories.exclude(orderID__isnull=True).values('id', 'name', 'orderIDNEW')
+
+        list_data = []
+        for category in categories:
+            list_data.append(
+                {
+                    'id': category['id'],
+                    'name': category['name'],
+                    'orderID': category['orderIDNEW'],
+                }
+            )
+
+        data = list(categories.values())
+        # qs_json = serializers.Serializer(categories)
+        return Response(list_data, status=status.HTTP_200_OK)
     else:
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
