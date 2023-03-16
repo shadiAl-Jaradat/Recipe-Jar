@@ -147,10 +147,34 @@ def get_all_recipes(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         category_id = UUID(data['categoryID'])
-        category = RecipeCategory.objects.get(pk=category_id)
+        if not category_id:
+            return Response({"error": "categoryID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            category = RecipeCategory.objects.get(pk=category_id)
+        except User.DoesNotExist:
+            return Response({"error": f"User with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
         recipes = Recipe.objects.filter(category=category)
-        serialized_recipes = RecipeSerializer(recipes, many=True)
-        return Response(serialized_recipes.data, status=status.HTTP_200_OK)
+        # serialized_recipes = RecipeSerializer(recipes, many=True)
+        new_list_of_recipes = []
+
+        for recipe in recipes:
+            video_data = {
+                'youtubeLink': recipe.videoUrl,
+                'title': recipe.videoTitle,
+                'image': recipe.videoImage,
+            }
+            recipe_data = {
+                'id': recipe.id,
+                'name': recipe.title,
+                'time': recipe.time,
+                'pictureUrl': recipe.pictureUrl,
+                'videoUrl': video_data,
+                'isEditorChoice': recipe.is_editor_choice
+            }
+            new_list_of_recipes.append(recipe_data)
+
+        return Response(new_list_of_recipes, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=405)
 
@@ -263,7 +287,7 @@ def save_recipe_two(request):
                 # Check if the item exists in the database or create a new one
                 # items_length = Item.objects.count()
                 # item, created = Item.objects.get_or_create(id=items_length+1, name=item_name)
-                
+
                 try:
                     item_from_db = Item.objects.get(name=item_name)
                     item = item_from_db
@@ -278,7 +302,6 @@ def save_recipe_two(request):
                 #     item.save()
                 # else:
                 #     item = item_from_db
-
 
                 # item = Item.objects.create(name=item_name)
 
