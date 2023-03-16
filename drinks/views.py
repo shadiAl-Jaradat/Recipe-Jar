@@ -1,12 +1,9 @@
 import unicodedata
-
-import self as self
 from django.db.models import Window
 from django.db.models import F
 from django.db.models.functions import RowNumber
 from rest_framework.generics import get_object_or_404
-from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
-    ItemSerializer, UnitSerializer, UserSerializer, ShoppingListCategorySerializer
+from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, UserSerializer, ShoppingListCategorySerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory
 from pytube import YouTube
 from googleapiclient.discovery import build
