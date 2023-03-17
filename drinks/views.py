@@ -146,11 +146,13 @@ def get_all_recipe_categories(request):
 
         list_data = []
         for category in categories:
+            recipes_of_this_category = Recipe.objects.filter(category=category['id'])
             list_data.append(
                 {
                     'id': category['id'],
                     'name': category['name'],
                     'orderID': category['orderIDNEW'],
+                    'numOfRecipes': len(recipes_of_this_category)
                 }
             )
 
