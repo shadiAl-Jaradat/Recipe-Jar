@@ -547,7 +547,7 @@ def get_all_shopping_list_categories(request):
             )
         return Response(list_of_categories, status=status.HTTP_200_OK)
     else:
-        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -584,7 +584,24 @@ def add_new_shopping_list_item(request):
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
+@api_view(['POST'])
+def toggle_item_status(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        item_id = data['itemID']
+        item = ShoppingListItem.objects.get(pk=item_id)
+        if item.isCheck:
+            item.isCheck = False
+        else:
+            item.isCheck = True
+        item.save()
+        new_status = str(item.isCheck)
+        return JsonResponse({'message': f'item status = {new_status}'}, status=status.HTTP_200_OK)
+    else:
+        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
 # these all functions/views not used for now
+
 
 @api_view(['POST'])
 def recipe_information_customized(request):
