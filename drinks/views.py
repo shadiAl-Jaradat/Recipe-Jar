@@ -39,7 +39,8 @@ def create_user(request):
             height=data['height'],
         )
         user.save()
-        return JsonResponse({'message': 'User created successfully'})
+        serialized_user = UserSerializer(user)
+        return JsonResponse(serialized_user.data, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -83,8 +84,8 @@ def create_recipe_category(request):
         )
 
         temp_category.save()
-        serialized_steps = RecipeCategorySerializer(temp_category)
-        return JsonResponse(serialized_steps.data)
+        serialized_category = RecipeCategorySerializer(temp_category)
+        return JsonResponse(serialized_category.data, status=status.HTTP_200_OK)
     else:
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -292,23 +293,16 @@ def save_recipe_two(request):
 
             # Set the orderID for the new recipe
             order_id = len(existing_recipes) + 1
-            # Create the recipe instance
             recipe = Recipe(id=uuid4(), title=recipe_name, time=time, pictureUrl=picture_url,
                             videoUrl=video_url, videoImage=video_image, videoTitle=video_title,
                             is_editor_choice=is_editor_choice, category=category, orderID=order_id)
             recipe.save()
 
-            # Loop over the ingredients and create their related models if they do not exist
             for ingredient in ingredients:
                 item_name = ingredient['name']
                 quantity = ingredient['quantity']
                 unit_name = ingredient['unit']
                 order_id = ingredient['orderID']
-
-                # Check if the item exists in the database or create a new one
-                # items_length = Item.objects.count()
-                # item, created = Item.objects.get_or_create(id=items_length+1, name=item_name)
-
                 try:
                     item_from_db = Item.objects.get(name=item_name)
                     item = item_from_db
@@ -316,17 +310,6 @@ def save_recipe_two(request):
                     items_length = Item.objects.count()
                     item = Item(id=items_length + 1, name=item_name)
                     item.save()
-
-                # if not item_from_db.DoesNotExist:
-                #     items_length = Item.objects.count()
-                #     item = Item(id=items_length + 1, name=item_name)
-                #     item.save()
-                # else:
-                #     item = item_from_db
-
-                # item = Item.objects.create(name=item_name)
-
-                # Check if the unit exists in the database or create a new on
                 if unit_name:
                     try:
                         unit_from_db = Unit.objects.get(name=unit_name)
@@ -496,7 +479,8 @@ def create_shopping_list_category(request):
         )
 
         temp_category.save()
-        return JsonResponse({'message': 'Shopping List Category created successfully'})
+        serialized_category = ShoppingListCategorySerializer(temp_category)
+        return JsonResponse(serialized_category.data, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -575,7 +559,6 @@ def recipe_information_origin(request):
             website_url = data['website_url']
             scraper = scrape_me(website_url)
             return Response(scraper.to_json(), status=status.HTTP_201_CREATED, )
-            # return Response(scraper.to_json(), status=status.HTTP_201_CREATED,)
         except:
             return HttpResponseBadRequest("Bad Request: Invalid request body")
     else:
