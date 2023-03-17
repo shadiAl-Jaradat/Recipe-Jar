@@ -4,7 +4,7 @@ from django.db.models import F
 from django.db.models.functions import RowNumber
 from rest_framework.generics import get_object_or_404
 from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, UserSerializer, ShoppingListCategorySerializer
-from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory
+from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem
 from pytube import YouTube
 from googleapiclient.discovery import build
 from rest_framework.decorators import api_view
@@ -176,23 +176,27 @@ def get_all_recipes(request):
         except User.DoesNotExist:
             return Response({"error": f"User with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
-        recipes = Recipe.objects.filter(category=category)
-        # serialized_recipes = RecipeSerializer(recipes, many=True)
+        recipes = Recipe.objects.annotate(
+            orderIDNEW=Window(
+                expression=RowNumber(),
+                order_by=F('orderID')
+            )
+        ).filter(category=category).order_by('orderID')
         new_list_of_recipes = []
 
         for recipe in recipes:
             video_data = {
-                'youtubeLink': recipe.videoUrl,
-                'title': recipe.videoTitle,
-                'image': recipe.videoImage,
+                'youtubeLink': recipe['videoUrl'],
+                'title': recipe['videoTitle'],
+                'image': recipe['videoImage'],
             }
             recipe_data = {
-                'id': recipe.id,
-                'name': recipe.title,
-                'time': recipe.time,
-                'pictureUrl': recipe.pictureUrl,
+                'id': recipe['id'],
+                'name': recipe['title'],
+                'time': recipe['time'],
+                'pictureUrl': recipe['pictureUrl'],
                 'videoUrl': video_data,
-                'isEditorChoice': recipe.is_editor_choice
+                'isEditorChoice': recipe['is_editor_choice']
             }
             new_list_of_recipes.append(recipe_data)
 
@@ -521,9 +525,25 @@ def get_all_shopping_list_categories(request):
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
             return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
-        categories = ShoppingListCategory.objects.filter(user=user).order_by('orderID')
-        serializer = ShoppingListCategorySerializer(categories, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+
+        categories = ShoppingListCategory.objects.annotate(
+            orderIDNEW=Window(
+                expression=RowNumber(),
+                order_by=F('orderID')
+            )
+        ).filter(user=user).order_by('orderID')
+        list_of_categories = []
+        for category in categories:
+            # TODO: return items of category with each of it
+            # list_of_items = ShoppingListItem.objects.filter(category=category['id'])
+            list_of_categories.append(
+                {
+                    'id': category['id'],
+                    'name': category['name'],
+                    'orderID': category['orderIDNEW'],
+                }
+            )
+        return Response(list_of_categories, status=status.HTTP_200_OK)
     else:
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
