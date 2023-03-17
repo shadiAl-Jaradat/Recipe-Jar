@@ -26,5 +26,7 @@ urlpatterns = [
     path('createShoppingListCategory/', views.create_shopping_list_category),
     path('deleteShoppingListCategory/', views.delete_shopping_list_category),
     path('renameShoppingListCategory/', views.rename_shopping_list_category),
-    path('getAllShoppingListCategory/', views.get_all_shopping_list_categories)
+    path('getAllShoppingListCategory/', views.get_all_shopping_list_categories),
+    # Shopping List Item
+    path('addNewItemToShoppingList/', views.add_new_shopping_list_item)
 ]

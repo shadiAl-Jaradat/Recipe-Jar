@@ -3,7 +3,8 @@ from django.db.models import Window
 from django.db.models import F
 from django.db.models.functions import RowNumber
 from rest_framework.generics import get_object_or_404
-from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, UserSerializer, ShoppingListCategorySerializer
+from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
+    UserSerializer, ShoppingListCategorySerializer, ShoppingListItemSerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem
 from pytube import YouTube
 from googleapiclient.discovery import build
@@ -545,6 +546,40 @@ def get_all_shopping_list_categories(request):
                 }
             )
         return Response(list_of_categories, status=status.HTTP_200_OK)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def add_new_shopping_list_item(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        item_uuid = uuid4()
+        shopping_list_item_name = data['name']
+        category_id = data['categoryID']
+        temp_category = ShoppingListCategory.objects.get(pk=category_id)
+        is_check = False
+        shopping_list_items = ShoppingListItem.objects.filter(categoryID=temp_category)
+        order_number = len(shopping_list_items) + 1
+
+        try:
+            item_from_db = Item.objects.get(name=shopping_list_item_name)
+            item = item_from_db
+        except Item.DoesNotExist:
+            items_length = Item.objects.count()
+            item = Item(id=items_length + 1, name=shopping_list_item_name)
+            item.save()
+
+        shopping_list_item = ShoppingListItem(
+                            id=item_uuid,
+                            itemID=item,
+                            categoryID=temp_category,
+                            isCheck=is_check,
+                            orderNumber=order_number
+                            )
+        shopping_list_item.save()
+        serialized_shopping_list_item = ShoppingListItemSerializer(shopping_list_item)
+        return JsonResponse(serialized_shopping_list_item.data, status=status.HTTP_200_OK)
     else:
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
