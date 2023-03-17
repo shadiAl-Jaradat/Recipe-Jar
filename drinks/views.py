@@ -179,9 +179,9 @@ def get_all_recipes(request):
         recipes = Recipe.objects.annotate(
             orderIDNEW=Window(
                 expression=RowNumber(),
-                order_by=F('orderID')
+                order_by=F('orderID').asc()
             )
-        ).filter(category=category).order_by('orderID')
+        ).filter(category=category).order_by('orderID').exclude(orderID__isnull=True).values('id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time', 'pictureUrl', 'is_editor_choice', 'orderIDNEW')
         new_list_of_recipes = []
 
         for recipe in recipes:
@@ -196,7 +196,8 @@ def get_all_recipes(request):
                 'time': recipe['time'],
                 'pictureUrl': recipe['pictureUrl'],
                 'videoUrl': video_data,
-                'isEditorChoice': recipe['is_editor_choice']
+                'isEditorChoice': recipe['is_editor_choice'],
+                'orderID': recipe['orderIDNEW']
             }
             new_list_of_recipes.append(recipe_data)
 
