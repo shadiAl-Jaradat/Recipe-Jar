@@ -5,7 +5,8 @@ from django.db.models.functions import RowNumber
 from rest_framework.generics import get_object_or_404
 from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
     UserSerializer, ShoppingListCategorySerializer, ShoppingListItemSerializer
-from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem
+from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem, \
+    Market
 from pytube import YouTube
 from googleapiclient.discovery import build
 from rest_framework.decorators import api_view
@@ -20,10 +21,31 @@ from ingredient_parser.en import parse
 from django.shortcuts import render
 from typing import TypeVar
 
+
 def home(request):
     context = {'title': 'Whisk App'}
     return render(request, 'whiskTemplates/home.html', context)
 
+
+def manager_stores(request):
+    return render(request, 'whiskTemplates/managerStores.html')
+
+
+def login_manager_store(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        manager_username = data['email']
+        manager_password = data['password']
+
+        market = Market.objects.filter(managerUserName=manager_username, managerPassword=manager_password).first()
+        if market:
+            # If a match is found, return success: True and the market ID
+            return JsonResponse({'success': True, 'message': 'Login successful', 'market_id': str(market.id)})
+        else:
+            # If no match is found, return success: False
+            return JsonResponse({'success': False, 'message': 'User not found or password incorrect'},)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def create_user(request):

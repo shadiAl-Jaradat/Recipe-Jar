@@ -5,18 +5,17 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap">
     <style>
         .title {
-            font-size: 48px;
+            font-size: 25px;
             text-align: center;
         }
         body {
             background-color: #7F5283;
         }
-        h1 {
-            padding-top: 150px;
-            color: white;
-            font-family: 'Poppins', sans-serif;
+        a {
+            text-decoration: none;
         }
-        h2 {
+        h1 {
+            padding-top: 35px;
             color: white;
             font-family: 'Poppins', sans-serif;
         }
@@ -26,13 +25,47 @@
           align-items: center;
           height: 60vh;
         }
+
+        .top-bar {
+			background-color: #ffffff;
+			height: 35px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0 20px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+		}
+
+		.top-bar-title {
+			font-size: 18px;
+			font-weight: bold;
+			color: #7F5283;
+            font-family: 'Poppins', sans-serif;
+		}
+
+		.tab {
+			color: #7F5283;
+			font-size: 10px;
+            font-family: 'Poppins', sans-serif;
+			padding: 10px 20px;
+			border-radius: 5px;
+			margin-left: 10px;
+			cursor: pointer;
+		}
     </style>
 </head>
 <body>
+	<div class="top-bar">
+        <a href="{% url 'manager_stores' %}">
+            <div class="tab">Manager stores</div>
+        </a>
+        <div class="top-bar-title">Whisk System</div>
+        <div class="tab">Whisk mobile App</div>
+	</div>
     <h1 class="title">Welcome to Whisk App!</h1>
-    <h2 class="title">Soon Ya 7asoon :) </h2>
     <div class="centered">
-      <svg width="500" height="500" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <svg width="300" height="300" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
         <g filter="url(#filter0_d_0_1)">
 <rect x="12" y="8" width="60" height="60" rx="13.3594" fill="#F7F7F7"/>
 </g>

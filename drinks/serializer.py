@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Recipe, RecipeCategory, Ingredient, Step, ShoppingListCategory, ShoppingListItem
+from .models import User, Recipe, RecipeCategory, Ingredient, Step, ShoppingListCategory, ShoppingListItem, Market
 
 
 # ALL THESE Serializers FOR WHISK APP #########################
@@ -58,7 +58,12 @@ class ShoppingListCategorySerializer(serializers.ModelSerializer):
 
 
 class ShoppingListItemSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = ShoppingListItem
+        fields = "__all__"
+
+
+class MarketSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Market
         fields = "__all__"

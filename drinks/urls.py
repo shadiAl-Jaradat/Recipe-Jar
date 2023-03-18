@@ -4,6 +4,9 @@ from drinks import views
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('manager-stores/', views.manager_stores, name='manager_stores'),
+    path('login-manager-store/', views.login_manager_store, name='login_manager_store'),
+    # Django Admin
     path('admin/', admin.site.urls),
     # test Api
     path('sendAndGetMyName/<str:name>/', views.send_name,),
