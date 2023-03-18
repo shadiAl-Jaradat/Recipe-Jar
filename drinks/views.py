@@ -521,6 +521,8 @@ def get_all_shopping_list_categories(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         user_id = data['userID']
+
+        # check if user ID is available
         if not user_id:
             return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
         try:
@@ -528,23 +530,52 @@ def get_all_shopping_list_categories(request):
         except User.DoesNotExist:
             return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
+        # create query set that get categories from DB
         categories = ShoppingListCategory.objects.annotate(
             orderIDNEW=Window(
                 expression=RowNumber(),
-                order_by=F('orderID')
+                order_by=F('orderID').asc()
             )
         ).filter(user=user).order_by('orderID')
+
+        # reformat the data in JSON format
         list_of_categories = []
         for category in categories:
-            # TODO: return items of category with each of it
-            # list_of_items = ShoppingListItem.objects.filter(category=category['id'])
+            # get all items for each Shopping list category
+            temp_category = ShoppingListCategory.objects.get(pk=category.id)
+            list_of_items = ShoppingListItem.objects.annotate(
+                orderNumberNEW=Window(
+                    expression=RowNumber(),
+                    order_by=F('orderNumber').asc()
+                )
+            ).filter(categoryID=temp_category).order_by('orderNumber')
+            list_of_items = list_of_items.exclude(orderNumber__isnull=True).values('id', 'itemID', 'isCheck', 'orderNumberNEW')
+
+            new_list_of_items = []
+            for shopping_list_item in list_of_items:
+                # get name of Item using ItemID
+                item_id = shopping_list_item['itemID']
+                item_from_db = Item.objects.get(id=item_id)
+                new_list_of_items.append(
+                    {
+                        'id': shopping_list_item['id'],
+                        'name': item_from_db.name,
+                        'isCheck': shopping_list_item['isCheck'],
+                        'orderID': shopping_list_item['orderNumberNEW']
+                    }
+                )
+
+            # put all data of each Shopping list category
             list_of_categories.append(
                 {
-                    'id': category['id'],
-                    'name': category['name'],
-                    'orderID': category['orderIDNEW'],
+                    'id': category.id,
+                    'name': category.name,
+                    'orderID': category.orderIDNEW,
+                    'Items': new_list_of_items
                 }
             )
+
+        # return all Shopping list categories with theme items
         return Response(list_of_categories, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
