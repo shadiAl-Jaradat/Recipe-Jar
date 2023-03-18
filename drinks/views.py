@@ -208,7 +208,8 @@ def get_all_recipes(request):
 
 
 @api_view(['POST'])
-def get_recipe_data(request):
+def get_recipe_ingredients(request):
+
     if request.method == 'POST':
         data = json.loads(request.body)
         recipe_id = UUID(data['RecipeID'])
@@ -217,17 +218,11 @@ def get_recipe_data(request):
         ingredients = Ingredient.objects.filter(recipe=recipe)
         serialized_ingredients = IngredientSerializer(ingredients, many=True)
 
-        steps = Step.objects.filter(recipe=recipe)
-        serialized_steps = StepSerializer(steps, many=True)
-
-        # list_ingredients = serialized_ingredients.data
         list_ingredients = []
-
         for ingredient in serialized_ingredients.data:
 
             item_id = ingredient['itemID']
             item_from_db = Item.objects.get(id=item_id)
-            # serialized_item = ItemSerializer(item_from_db, many=True)
 
             quantity = ingredient['quantity']
 
@@ -238,8 +233,6 @@ def get_recipe_data(request):
                 unit_name = unit_from_db.name
             else:
                 unit_name = None
-
-            # serialized_unit = UnitSerializer(unit_from_db, many=True)
 
             order_id = ingredient['orderNumber']
 
@@ -252,6 +245,21 @@ def get_recipe_data(request):
                 }
             )
 
+        return Response(list_ingredients, status=status.HTTP_200_OK)
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+
+@api_view(['POST'])
+def get_recipe_steps(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        recipe_id = UUID(data['RecipeID'])
+        recipe = Recipe.objects.get(pk=recipe_id)
+
+        steps = Step.objects.filter(recipe=recipe)
+        serialized_steps = StepSerializer(steps, many=True)
+
         list_steps = []
         for step in serialized_steps.data:
             step_description = step['description']
@@ -263,12 +271,7 @@ def get_recipe_data(request):
                 }
             )
 
-        data = {
-            'ingredients': list_ingredients,
-            'steps': list_steps,
-        }
-
-        return Response(data, status=status.HTTP_200_OK)
+        return Response(list_steps, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=405)
 

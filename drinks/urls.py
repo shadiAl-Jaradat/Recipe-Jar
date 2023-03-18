@@ -20,7 +20,8 @@ urlpatterns = [
     path('deleteRecipeCategory/', views.delete_recipe_category),
     # recipe Apis
     path('getAllRecipes/', views.get_all_recipes),
-    path('getRecipeData/', views.get_recipe_data),
+    path('getRecipeIngredients/', views.get_recipe_ingredients),
+    path('getRecipeSteps/', views.get_recipe_steps),
     path('deleteRecipe/', views.delete_recipe),
     # Shopping List Category
     path('createShoppingListCategory/', views.create_shopping_list_category),
