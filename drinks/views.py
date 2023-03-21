@@ -29,12 +29,12 @@ def home(request):
 
 def manager_markets(request):
     context = {'title': 'Whisk App managers'}
-    return render(request, 'whiskTemplates/managermarkets.html', context)
+    return render(request, 'whiskTemplates/managerMarkets.html', context)
 
 
 def manager_markets_home_page(request):
     market_id = request.GET.get('market_id')
-    return render(request, 'whiskTemplates/managermarketsHomePage.html', {'market_id': market_id})
+    return render(request, 'whiskTemplates/managerMarketsHomePage.html', {'market_id': market_id})
 
 
 def login_manager_market(request):
