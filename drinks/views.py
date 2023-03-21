@@ -28,7 +28,8 @@ def home(request):
 
 
 def manager_markets(request):
-    return render(request, 'whiskTemplates/managermarkets.html')
+    context = {'title': 'Whisk App managers'}
+    return render(request, 'whiskTemplates/managermarkets.html', context)
 
 
 def manager_markets_home_page(request):
