@@ -302,7 +302,7 @@
                     const deleteBtnZone = document.querySelector('.delete-btn');
                     deleteBtnZone.innerHTML = `<h2>File uploaded successfully ...</h2>`;
 
-                    {#alert(data.item_names);#}
+                    alert(data.item_names);
                   })
                   .catch(error => {
                     console.error(error);
