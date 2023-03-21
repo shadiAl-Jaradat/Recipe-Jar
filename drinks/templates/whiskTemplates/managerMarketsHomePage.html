@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Stores Home Page</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap">
+    <style>
+
+    .frame {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 400px;
+        height: 400px;
+        margin-top: -200px;
+        margin-left: -200px;
+        border-radius: 2px;
+        box-shadow: 4px 8px 16px 0 rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        background: #E0E0ED;
+        color: #333;
+        font-family: "Open Sans", Helvetica, sans-serif;
+
+    }
+
+    body, html {
+      height: 100%;
+        background-color: #E0E0ED ;
+        background-position: center;
+     background-repeat: no-repeat;
+     background-size: cover;
+    }
+
+    .center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 400px;
+        height: 400px;
+        margin-top: -200px;
+        margin-left: -200px;
+        border-radius: 20px;
+        box-shadow: 8px 10px 15px 0 rgba(0, 0, 0, 0.2);
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: space-evenly;
+        flex-direction: column;
+
+    }
+
+    .title {
+        width: 100%;
+        height: 50px;
+        border-bottom: 1px solid #999;
+        text-align: center;
+    }
+
+    h1{
+        font-size: 16px;
+        font-weight: 300;
+        color: #666;
+        font-family: 'Poppins', sans-serif;
+    }
+    h2 {
+        font-size: 16px;
+        font-weight: 300;
+        color: forestgreen;
+        font-family: 'Poppins', sans-serif;
+    }
+    p {
+        font-size: 16px;
+        font-family: 'Poppins', sans-serif;
+        text-align: center;
+    }
+
+    .dropzone {
+        width: 100px;
+        height: 80px;
+        border: 1px dashed #999;
+        border-radius: 3px;
+        text-align: center;
+    }
+
+    .upload-icon {
+        margin: 25px 2px 2px 2px;
+    }
+
+    .upload-input {
+        position: relative;
+        top: -62px;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+    }
+
+    .btn {
+        display: block;
+        width: 140px;
+        height: 40px;
+        background: #7F5283;
+        color: white;
+        border-radius: 3px;
+        border: 0;
+        transition: all 0.3s ease-in-out;
+        font-size: 14px;
+    }
+    .top-bar {
+			background-color: #ffffff;
+			height: 50px;
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0 20px;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+		}
+
+    .top-bar-title {
+			font-size: 18px;
+			font-weight: bold;
+			color: #7F5283;
+            font-family: 'Poppins', sans-serif;
+		}
+    .tab {
+			color: #a9a9a9;
+			font-size: 18px;
+            font-family: 'Poppins', sans-serif;
+			padding: 10px 20px;
+			border-radius: 5px;
+			margin-left: 10px;
+			cursor: pointer;
+		}
+    .tab-location{
+        background-color: #EDC432;
+        font-size: 12px;
+        color:white;
+        font-weight: bold;
+        font-family: 'Poppins', sans-serif;
+        padding: 7px;
+        border-radius: 10px;
+    }
+    .dropzone {
+        width: 100px;
+        height: 80px;
+        border: 1px dashed #999;
+        border-radius: 3px;
+        text-align: center;
+    }
+    .upload-icon {
+        margin: 25px 2px 2px 2px;
+    }
+    .upload-input {
+        position: relative;
+        top: -62px;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+    }
+    .delete-button{
+        display: block;
+        width: 140px;
+        height: 40px;
+        background: #c71c1c;
+        color: white;
+        border-radius: 3px;
+        border: 0;
+        font-size: 14px;
+    }
+    .file-name {
+        font-size: 10px;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="tab-location">Change location</div>
+        <div class="top-bar-title">Whisk</div>
+        <div class="tab" id="market-name"> </div>
+	</div>
+
+    <div class="center">
+        <div class="title">
+            <h1>Drop file to upload</h1>
+        </div>
+         <div class="dropzone">
+             <div class="upload-image"><img width="45" height="45" src="http://100dayscss.com/codepen/upload.svg" class="upload-icon" /></div>
+             <input type="file" class="upload-input" />
+         </div>
+        <div class="delete-btn" ></div>
+        <button type="button" class="btn" name="uploadbutton">Upload File</button>
+    </div>
+
+    <script>
+        const marketId = new URLSearchParams(window.location.search).get('market_id');
+        const url = '{% url "get_market_data" %}';
+        const data = { 'marketID': marketId };
+        const csrftoken = getCookie('csrftoken');
+
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            // display the market data on the page
+            const marketName = document.getElementById('market-name');
+            marketName.innerHTML = `${data.name}`
+
+            {#const marketDataElement = document.getElementById('market-data');#}
+            {#marketDataElement.innerHTML = `#}
+            {#    <div class="title">#}
+			{#		<h1>Drop file to upload</h1>#}
+			{#	</div>#}
+            {#`;#}
+        })
+        .catch(error => console.error(error));
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Add event listener to the file input
+        document.querySelector('.upload-input').addEventListener('change', handelImage);
+
+        const uploadButton = document.querySelector('button[name="uploadbutton"]');
+        uploadButton.addEventListener('click', handleFileUpload);
+
+       function handelImage(event) {
+          const file = event.target.files[0];
+          const dropzone = document.querySelector('.upload-image');
+          const deleteBtnZone = document.querySelector('.delete-btn');
+          console.log("ana hon in handelImage");
+
+          // Display the delete button
+
+          // Update the dropzone content
+          dropzone.innerHTML = `
+            <img height="45px" width="45px" src="https://www.investopedia.com/thmb/RaxzKE6Bgmh1uzjH6EOFhMMHYX0=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/excel_ms-5bfc379146e0fb00511cdefe.jpg" class="file-icon" />
+            <div class="file-name">${file.name}</div>
+          `;
+
+          deleteBtnZone.innerHTML = `<button class="delete-button" ">Delete selected File</button>`;
+
+
+          const deleteButton = document.querySelector('.delete-button')
+          // Add event listener to the delete button
+          deleteButton.addEventListener('click', function() {
+            // Reset the dropzone content
+            dropzone.innerHTML = `
+              <img width="45" height="45" src="http://100dayscss.com/codepen/upload.svg" class="upload-icon" />
+            `;
+
+            deleteBtnZone.innerHTML = ``;
+            // Reset the file input
+            document.querySelector('.upload-input').value = '';
+            // Hide the delete button
+            deleteButton.style.display = 'none';
+          });
+       }
+
+
+
+
+         function handleFileUpload() {
+              const fileInput = document.querySelector('.upload-input');
+              const file = fileInput.files[0];
+              if (file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                fetch('/getItemsFromExcel/', {
+                  method: 'POST',
+                  body: formData,
+                })
+                  .then(response => response.json())
+                  .then(data => {
+                    console.log(data);
+                        const dropzone = document.querySelector('.upload-image');
+                        dropzone.innerHTML = `<img width="45" height="45" src="http://100dayscss.com/codepen/upload.svg" class="upload-icon" />`;
+
+                    const deleteBtnZone = document.querySelector('.delete-btn');
+                    deleteBtnZone.innerHTML = `<h2>File uploaded successfully ...</h2>`;
+
+                    {#alert(data.item_names);#}
+                  })
+                  .catch(error => {
+                    console.error(error);
+                  });
+              } else {
+                alert('Please select an Excel file.');
+              }
+         }
+
+
+
+    </script>
+</body>
+</html>
+
+
+{#<div class="title">#}
+{#					<h1>Drop file to upload</h1>#}
+{#				</div>#}
+{#                <p>Location: ${data.location}</p>#}
+{#                <div class="dropzone">#}

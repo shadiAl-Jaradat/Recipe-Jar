@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Whisk Manager Stores</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap">
+	<style>
+        body, html {
+            height: 100%;
+            background-color: #E0E0ED ;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+
+		.container {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			height: 100vh;
+            {#background-color: white;#}
+		}
+
+        h2{
+            font-family: 'Poppins', sans-serif;
+            color: black;
+        }
+        label {
+            font-family: 'Poppins', sans-serif;
+        }
+
+
+        .login-box {
+            background-color: #ffffff;
+			box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+			padding: 20px;
+			width: 250px;
+            height: 300px;
+			text-align: center;
+        }
+
+        .login-box label {
+          display: block;
+          margin-bottom: 5px;
+          text-align: left;
+          font-size: 10px;
+        }
+
+        .login-box input[type="email"],
+        .login-box input[type="password"] {
+          background-color: #e2e2e2;
+          padding: 10px;
+          margin-bottom: 10px;
+          width: 100%;
+          box-sizing: border-box;
+          transition: border-color 0.2s ease-in-out;
+        }
+
+        .login-box input[type="email"]:focus,
+        .login-box input[type="password"]:focus {
+          border-color: #7f5283;
+        }
+
+        .login-box button[type="submit"] {
+          background-color: #7f5283;
+          color: white;
+          border: none;
+          width: 200px;
+          padding: 10px 20px;
+          cursor: pointer;
+          transition: background-color 0.2s ease-in-out;
+        }
+
+        .space{
+            height: 40px;
+        }
+
+        .login-box button[type="submit"]:hover {
+          background-color: #934fa6;
+        }
+	</style>
+</head>
+<body>
+    <div class="container">
+        <form class="login-box" id="login-form" method="POST">
+            {% csrf_token %}
+            <h2>LOGIN</h2>
+            <input type="email" id="email" placeholder="Email" name="email" required>
+            <input type="password" id="password" placeholder="Password" name="password" required>
+            <div class="space"></div>
+            <button type="submit">LOGIN</button>
+        </form>
+    </div>
+</body>
+
+<script>
+const loginForm = document.getElementById('login-form');
+loginForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const url = '{% url "login_manager_market" %}';
+    const data = { email, password};
+    const csrftoken = getCookie('csrftoken');
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = '{% url "manager_markets_home_page" %}' + `?market_id=${data.market_id}`;
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => console.error(error));
+});
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+</script>
+
+
+</html>

@@ -19,7 +19,7 @@ from uuid import UUID, uuid4
 from quantulum3 import parser
 from ingredient_parser.en import parse
 from django.shortcuts import render
-from typing import TypeVar
+import pandas as pd
 
 
 def home(request):
@@ -27,11 +27,16 @@ def home(request):
     return render(request, 'whiskTemplates/home.html', context)
 
 
-def manager_stores(request):
-    return render(request, 'whiskTemplates/managerStores.html')
+def manager_markets(request):
+    return render(request, 'whiskTemplates/managermarkets.html')
 
 
-def login_manager_store(request):
+def manager_markets_home_page(request):
+    market_id = request.GET.get('market_id')
+    return render(request, 'whiskTemplates/managermarketsHomePage.html', {'market_id': market_id})
+
+
+def login_manager_market(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         manager_username = data['email']
@@ -46,6 +51,53 @@ def login_manager_store(request):
             return JsonResponse({'success': False, 'message': 'User not found or password incorrect'},)
     else:
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def get_market_data(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        market_id = data['marketID']
+        market = Market.objects.filter(id=market_id).first()
+        market_data = {
+            "name": market.name,
+            "location": market.location,
+        }
+        return JsonResponse(market_data, status=status.HTTP_200_OK)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def change_market_location(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        market_id = data['marketID']
+        new_location = data['newLocation']
+        market = Market.objects.filter(id=market_id).first()
+        market.location = new_location
+        market.save()
+        market_data = {
+            "name": market.name,
+            "location": new_location,
+        }
+        return JsonResponse(market_data, status=status.HTTP_200_OK)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def get_item_from_excel(request):
+    if request.method == 'POST':
+        # Get the uploaded file from the request
+        file = request.FILES['file']
+        # Load the Excel file using pandas
+        df = pd.read_excel(file)
+        # Get the values in the "Item Name" column
+        item_names = df['Item name'].tolist()
+        # Return the list of item names as a JSON response
+        return JsonResponse({'item_names': item_names})
+    # If the request method is not POST, return an error response
+    return JsonResponse({'error': 'Invalid request method'})
+
 
 @api_view(['POST'])
 def create_user(request):

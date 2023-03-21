@@ -4,8 +4,11 @@ from drinks import views
 
 urlpatterns = [
     path('', views.home, name='home'),
-    path('manager-stores/', views.manager_stores, name='manager_stores'),
-    path('login-manager-store/', views.login_manager_store, name='login_manager_store'),
+    path('manager-markets/', views.manager_markets, name='manager_markets'),
+    path('login-manager-market/', views.login_manager_market, name='login_manager_market'),
+    path('manager_markets_home_page/', views.manager_markets_home_page, name='manager_markets_home_page'),
+    path('get_market_data/', views.get_market_data, name='get_market_data'),
+    path('getItemsFromExcel/', views.get_item_from_excel),
     # Django Admin
     path('admin/', admin.site.urls),
     # test Api
