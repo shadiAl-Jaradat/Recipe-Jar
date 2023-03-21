@@ -3915,3 +3915,22 @@ Traceback (most recent call last):
     raise TemplateDoesNotExist(template_name, chain=chain)
 django.template.exceptions.TemplateDoesNotExist: whiskTemplates/managermarkets.html
 [21/Mar/2023 19:15:29] "GET /manager-markets/ HTTP/1.1" 500 74475
+nohup: ignoring input
+Watching for file changes with StatReloader
+[21/Mar/2023 19:18:59] "GET / HTTP/1.1" 200 10014
+Internal Server Error: /manager-markets/
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.10/dist-packages/django/core/handlers/exception.py", line 56, in inner
+    response = get_response(request)
+  File "/usr/local/lib/python3.10/dist-packages/django/core/handlers/base.py", line 197, in _get_response
+    response = wrapped_callback(request, *callback_args, **callback_kwargs)
+  File "/run/whisk/whisk/drinks/views.py", line 31, in manager_markets
+    return render(request, 'whiskTemplates/managermarkets.html')
+  File "/usr/local/lib/python3.10/dist-packages/django/shortcuts.py", line 24, in render
+    content = loader.render_to_string(template_name, context, request, using=using)
+  File "/usr/local/lib/python3.10/dist-packages/django/template/loader.py", line 61, in render_to_string
+    template = get_template(template_name, using=using)
+  File "/usr/local/lib/python3.10/dist-packages/django/template/loader.py", line 19, in get_template
+    raise TemplateDoesNotExist(template_name, chain=chain)
+django.template.exceptions.TemplateDoesNotExist: whiskTemplates/managermarkets.html
+[21/Mar/2023 19:19:01] "GET /manager-markets/ HTTP/1.1" 500 74475
