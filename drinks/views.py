@@ -54,7 +54,7 @@ def login_manager_market(request):
             return JsonResponse({'success': True, 'message': 'Login successful', 'market_id': str(market.id)})
         else:
             # If no match is found, return success: False
-            return JsonResponse({'success': False, 'message': 'User not found or password incorrect'},)
+            return JsonResponse({'success': False, 'message': 'User not found or password incorrect'}, )
     else:
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -284,7 +284,12 @@ def get_all_recipes(request):
                 expression=RowNumber(),
                 order_by=F('orderID').asc()
             )
-        ).filter(category=category).order_by('orderID').exclude(orderID__isnull=True).values('id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time', 'pictureUrl', 'is_editor_choice', 'orderIDNEW')
+        ).filter(category=category).order_by('orderID').exclude(orderID__isnull=True).values('id', 'videoUrl',
+                                                                                             'videoTitle', 'videoImage',
+                                                                                             'title', 'time',
+                                                                                             'pictureUrl',
+                                                                                             'is_editor_choice',
+                                                                                             'orderIDNEW')
         new_list_of_recipes = []
 
         for recipe in recipes:
@@ -311,7 +316,6 @@ def get_all_recipes(request):
 
 @api_view(['POST'])
 def get_recipe_ingredients(request):
-
     if request.method == 'POST':
         data = json.loads(request.body)
         recipe_id = UUID(data['RecipeID'])
@@ -654,7 +658,8 @@ def get_all_shopping_list_categories(request):
                     order_by=F('orderNumber').asc()
                 )
             ).filter(categoryID=temp_category).order_by('orderNumber')
-            list_of_items = list_of_items.exclude(orderNumber__isnull=True).values('id', 'itemID', 'isCheck', 'orderNumberNEW')
+            list_of_items = list_of_items.exclude(orderNumber__isnull=True).values('id', 'itemID', 'isCheck',
+                                                                                   'orderNumberNEW')
 
             new_list_of_items = []
             for shopping_list_item in list_of_items:
@@ -707,17 +712,33 @@ def add_new_shopping_list_item(request):
             item.save()
 
         shopping_list_item = ShoppingListItem(
-                            id=item_uuid,
-                            itemID=item,
-                            categoryID=temp_category,
-                            isCheck=is_check,
-                            orderNumber=order_number
-                            )
+            id=item_uuid,
+            itemID=item,
+            categoryID=temp_category,
+            isCheck=is_check,
+            orderNumber=order_number
+        )
         shopping_list_item.save()
         serialized_shopping_list_item = ShoppingListItemSerializer(shopping_list_item)
         return JsonResponse(serialized_shopping_list_item.data, status=status.HTTP_200_OK)
     else:
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def delete_shopping_list_item(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        shopping_list_item_id = data['itemID']
+        try:
+            shopping_list_item = ShoppingListItem.objects.get(pk=shopping_list_item_id)
+        except:
+            return JsonResponse({'message': 'shopping list item not found'}, status=status.HTTP_400_BAD_REQUEST)
+
+        shopping_list_item.delete()
+        return Response({'message': ' shopping list item deleted :( '}, status=status.HTTP_204_NO_CONTENT)
+    else:
+        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -735,6 +756,7 @@ def toggle_item_status(request):
         return JsonResponse({'message': f'item status = {new_status}'}, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
 
 # these all functions/views not used for now
 
