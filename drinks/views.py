@@ -6,7 +6,7 @@ from rest_framework.generics import get_object_or_404
 from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
     UserSerializer, ShoppingListCategorySerializer, ShoppingListItemSerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem, \
-    Market
+    Market, MarketItem
 from pytube import YouTube
 from googleapiclient.discovery import build
 from rest_framework.decorators import api_view
@@ -96,10 +96,31 @@ def get_item_from_excel(request):
     if request.method == 'POST':
         # Get the uploaded file from the request
         file = request.FILES['file']
+        market_id = request.data.get('marketID')
+        market = Market.objects.filter(id=market_id).first()
         # Load the Excel file using pandas
         df = pd.read_excel(file)
         # Get the values in the "Item Name" column
         item_names = df['Item name'].tolist()
+
+        for item_name in item_names:
+            try:
+                item_from_db = Item.objects.get(name=item_name)
+                item = item_from_db
+            except Item.DoesNotExist:
+                items_length = Item.objects.count()
+                item = Item(id=items_length + 1, name=item_name)
+                item.save()
+
+            market_item_id = uuid4()
+            # Create the marketItem instance
+            market_item = MarketItem(
+                id=market_item_id,
+                itemID=item,
+                marketID=market
+            )
+            market_item.save()
+
         # Return the list of item names as a JSON response
         return JsonResponse({'item_names': item_names})
     # If the request method is not POST, return an error response

@@ -286,6 +286,7 @@
               if (file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
                 const formData = new FormData();
                 formData.append('file', file);
+                formData.append('marketID', localStorage.getItem("marketID"))
 
                 fetch('/getItemsFromExcel/', {
                   method: 'POST',

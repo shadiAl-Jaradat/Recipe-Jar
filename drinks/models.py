@@ -119,6 +119,14 @@ class Market(models.Model):
         return self.name
 
 
+class MarketItem(models.Model):
+    id = models.UUIDField(primary_key=True)
+    itemID = models.ForeignKey(Item, on_delete=models.CASCADE, related_name='item')
+    marketID = models.ForeignKey(Market, on_delete=models.CASCADE, related_name='marketItems')
+
+    @property
+    def __repr__(self):
+        return self.id
 
 
 
