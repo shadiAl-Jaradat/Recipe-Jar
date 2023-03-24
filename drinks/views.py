@@ -37,6 +37,11 @@ def manager_markets_home_page(request):
     return render(request, 'whiskTemplates/managerMarketsHomePage.html', {'market_id': market_id})
 
 
+def change_location_page(request):
+    market_id = request.GET.get('market_id')
+    return render(request, 'whiskTemplates/changeLocation.html', {'market_id': market_id})
+
+
 def login_manager_market(request):
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -71,7 +76,7 @@ def get_market_data(request):
 def change_market_location(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        market_id = data['marketID']
+        market_id = data['id']
         new_location = data['newLocation']
         market = Market.objects.filter(id=market_id).first()
         market.location = new_location

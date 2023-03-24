@@ -7,6 +7,8 @@ urlpatterns = [
     path('manager-markets/', views.manager_markets, name='manager_markets'),
     path('login-manager-market/', views.login_manager_market, name='login_manager_market'),
     path('manager_markets_home_page/', views.manager_markets_home_page, name='manager_markets_home_page'),
+    path('change_location_page/', views.change_location_page, name='change_location_page'),
+    path('change_market_location/', views.change_market_location, name="change_market_location"),
     path('get_market_data/', views.get_market_data, name='get_market_data'),
     path('getItemsFromExcel/', views.get_item_from_excel),
     # Django Admin

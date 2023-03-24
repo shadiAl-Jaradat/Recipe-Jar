@@ -179,7 +179,7 @@
 <body>
 
     <div class="top-bar">
-        <div class="tab-location">Change location</div>
+        <div class="tab-location" id="changeLocation">Change location</div>
         <div class="top-bar-title">Whisk</div>
         <div class="tab" id="market-name"> </div>
 	</div>
@@ -215,13 +215,9 @@
             // display the market data on the page
             const marketName = document.getElementById('market-name');
             marketName.innerHTML = `${data.name}`
-
-            {#const marketDataElement = document.getElementById('market-data');#}
-            {#marketDataElement.innerHTML = `#}
-            {#    <div class="title">#}
-			{#		<h1>Drop file to upload</h1>#}
-			{#	</div>#}
-            {#`;#}
+            localStorage.setItem("marketID", marketId);
+            localStorage.setItem("marketName", data.name);
+            localStorage.setItem("marketLocation", data.location);
         })
         .catch(error => console.error(error));
 
@@ -312,7 +308,10 @@
               }
          }
 
-
+         document.getElementById("changeLocation").addEventListener("click", function() {
+                marketID_DB = localStorage.getItem("marketID");
+               window.location.href = '{% url "change_location_page" %}' + `?market_id=${marketID_DB}`;
+         });
 
     </script>
 </body>
