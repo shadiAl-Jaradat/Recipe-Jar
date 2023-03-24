@@ -112,6 +112,7 @@ class Market(models.Model):
     managerUserName = models.CharField(max_length=100)
     managerPassword = models.CharField(max_length=100)
     name = models.CharField(max_length=100)
+    logo = models.CharField(max_length=1000)
     location = models.CharField(max_length=100)
 
     def __str__(self):

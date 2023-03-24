@@ -180,10 +180,9 @@
 
     <div class="top-bar">
         <div class="tab-location" id="changeLocation">Change location</div>
-        <div class="top-bar-title">Whisk</div>
+        <img id="myImage" src="" alt="My Image" height="50" width="250">
         <div class="tab" id="market-name"> </div>
 	</div>
-
     <div class="center">
         <div class="title">
             <h1>Drop file to upload</h1>
@@ -218,6 +217,9 @@
             localStorage.setItem("marketID", marketId);
             localStorage.setItem("marketName", data.name);
             localStorage.setItem("marketLocation", data.location);
+            const imageElement = document.getElementById('myImage');
+            imageElement.src = data.logo;
+
         })
         .catch(error => console.error(error));
 

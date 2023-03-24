@@ -67,6 +67,7 @@ def get_market_data(request):
         market_data = {
             "name": market.name,
             "location": market.location,
+            "logo": market.logo
         }
         return JsonResponse(market_data, status=status.HTTP_200_OK)
     else:
