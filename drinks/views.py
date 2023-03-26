@@ -581,6 +581,7 @@ def create_shopping_list_category(request):
         # reformat the data
         category_uuid = uuid4()
         name = data['name']
+        icon = data['icon']
         user_id = data['userID']
         temp_user = User.objects.get(pk=user_id)
         shopping_list_categories = ShoppingListCategory.objects.filter(user=temp_user).order_by('orderID')
@@ -590,7 +591,8 @@ def create_shopping_list_category(request):
             id=category_uuid,
             name=name,
             orderID=order_id,
-            user=temp_user
+            user=temp_user,
+            icon=icon
         )
 
         temp_category.save()
@@ -658,6 +660,7 @@ def get_all_shopping_list_categories(request):
                 {
                     'id': category.id,
                     'name': category.name,
+                    'icon': category.icon,
                     'numberOfItems': length,
                     'orderID': category.orderIDNEW,
                 }
