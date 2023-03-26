@@ -36,6 +36,7 @@ urlpatterns = [
     path('deleteShoppingListCategory/', views.delete_shopping_list_category),
     path('renameShoppingListCategory/', views.rename_shopping_list_category),
     path('getAllShoppingListCategory/', views.get_all_shopping_list_categories),
+    path('getShoppingListItems/', views.get_shopping_list_items),
     # Shopping List Item
     path('addNewItemToShoppingList/', views.add_new_shopping_list_item),
     path('toggleItemStatus/', views.toggle_item_status),

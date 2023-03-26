@@ -650,38 +650,16 @@ def get_all_shopping_list_categories(request):
         # reformat the data in JSON format
         list_of_categories = []
         for category in categories:
-            # get all items for each Shopping list category
             temp_category = ShoppingListCategory.objects.get(pk=category.id)
-            list_of_items = ShoppingListItem.objects.annotate(
-                orderNumberNEW=Window(
-                    expression=RowNumber(),
-                    order_by=F('orderNumber').asc()
-                )
-            ).filter(categoryID=temp_category).order_by('orderNumber')
-            list_of_items = list_of_items.exclude(orderNumber__isnull=True).values('id', 'itemID', 'isCheck',
-                                                                                   'orderNumberNEW')
-
-            new_list_of_items = []
-            for shopping_list_item in list_of_items:
-                # get name of Item using ItemID
-                item_id = shopping_list_item['itemID']
-                item_from_db = Item.objects.get(id=item_id)
-                new_list_of_items.append(
-                    {
-                        'id': shopping_list_item['id'],
-                        'name': item_from_db.name,
-                        'isCheck': shopping_list_item['isCheck'],
-                        'orderID': shopping_list_item['orderNumberNEW']
-                    }
-                )
-
+            items = ShoppingListItem.objects.filter(categoryID=temp_category)
+            length = len(items)
             # put all data of each Shopping list category
             list_of_categories.append(
                 {
                     'id': category.id,
                     'name': category.name,
+                    'numberOfItems': length,
                     'orderID': category.orderIDNEW,
-                    'Items': new_list_of_items
                 }
             )
 
@@ -689,6 +667,48 @@ def get_all_shopping_list_categories(request):
         return Response(list_of_categories, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def get_shopping_list_items(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        category_id = data['categoryID']
+
+        # check if category ID is available
+        if not category_id:
+            return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            shopping_list_category = ShoppingListCategory.objects.get(pk=category_id)
+        except User.DoesNotExist:
+            return Response({"error": f"Category with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        items = ShoppingListItem.objects.annotate(
+            orderNumberNEW=Window(
+                expression=RowNumber(),
+                order_by=F('orderNumber').asc()
+            )
+        ).filter(categoryID=shopping_list_category).order_by('orderNumber')
+        items = items.exclude(orderNumber__isnull=True).values('id', 'itemID', 'isCheck', 'orderNumberNEW')
+
+        new_list_of_items = []
+        for shopping_list_item in items:
+            # get name of Item using ItemID
+            item_id = shopping_list_item['itemID']
+            item_from_db = Item.objects.get(id=item_id)
+            new_list_of_items.append(
+                {
+                    'id': shopping_list_item['id'],
+                    'name': item_from_db.name,
+                    'isCheck': shopping_list_item['isCheck'],
+                    'orderID': shopping_list_item['orderNumberNEW']
+                }
+            )
+
+        return Response(new_list_of_items, status=status.HTTP_200_OK)
+
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
