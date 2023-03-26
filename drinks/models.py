@@ -89,6 +89,7 @@ class ShoppingListCategory(models.Model):
     id = models.UUIDField(primary_key=True)
     name = models.CharField(max_length=100)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='shoppingListCategories')
+    icon = models.CharField(max_length=100)
     orderID = models.PositiveIntegerField()
 
     def __str__(self):
