@@ -5,8 +5,7 @@ from django.db.models import Window
 from django.db.models import F
 from django.db.models.functions import RowNumber
 from rest_framework.generics import get_object_or_404
-from vincenty import vincenty
-from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
+from .serializer import IngredientSerializer, RecipeCategorySerializer, StepSerializer, \
     UserSerializer, ShoppingListCategorySerializer, ShoppingListItemSerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem, \
     Market, MarketItem
@@ -14,7 +13,7 @@ from pytube import YouTube
 from googleapiclient.discovery import build
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status, serializers
+from rest_framework import status
 import json
 from django.http import JsonResponse, HttpResponseBadRequest
 from recipe_scrapers import scrape_me
@@ -25,8 +24,7 @@ from django.shortcuts import render
 import pandas as pd
 import requests
 import re
-from geopy.distance import distance, Point
-from urllib.parse import urlparse, parse_qs
+
 
 def home(request):
     context = {'title': 'Whisk App'}
