@@ -1,8 +1,11 @@
 import unicodedata
+from datetime import datetime
+import googlemaps
 from django.db.models import Window
 from django.db.models import F
 from django.db.models.functions import RowNumber
 from rest_framework.generics import get_object_or_404
+from vincenty import vincenty
 from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
     UserSerializer, ShoppingListCategorySerializer, ShoppingListItemSerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem, \
@@ -20,7 +23,10 @@ from quantulum3 import parser
 from ingredient_parser.en import parse
 from django.shortcuts import render
 import pandas as pd
-
+import requests
+import re
+from geopy.distance import distance, Point
+from urllib.parse import urlparse, parse_qs
 
 def home(request):
     context = {'title': 'Whisk App'}
@@ -779,6 +785,88 @@ def toggle_item_status(request):
         return JsonResponse({'message': f'item status = {new_status}'}, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+def get_lat_lon_from_google_maps_link(link):
+    # extract the place ID from the link
+    place_id_list = re.findall(r'place/([\w\d]+)', link)
+    if not place_id_list:
+        raise ValueError("Link doesn't contain a place ID.")
+    place_id = place_id_list[0]
+
+    # request the place details from the Google Maps API
+    response = requests.get(f'https://maps.googleapis.com/maps/api/place/details/json?place_id={place_id}&key=<your_api_key>')
+
+    # extract the latitude and longitude from the response
+    lat = response.json()['result']['geometry']['location']['lat']
+    lon = response.json()['result']['geometry']['location']['lng']
+
+    return lat, lon
+
+
+def extract_lat_lon(gmaps_link):
+    """
+    Extract latitude and longitude from a Google Maps link.
+    """
+    url = gmaps_link
+    lat_lon_regex = re.compile(r'\/@([-+]?\d*\.\d+),([-+]?\d*\.\d+)')
+    match = lat_lon_regex.search(url)
+
+    if match:
+        lat = float(match.group(1))
+        lon = float(match.group(2))
+        return lat, lon
+    else:
+        return JsonResponse({'error': 'No match found'})
+
+
+@api_view(['POST'])
+def check_availability(request):
+    # get the list of names from the request
+    data = json.loads(request.body)
+    names = data['listOfItemsNames']
+    # get the user's latitude and longitude from the request
+    user_lat = float(data['userLat'])
+    user_lon = float(data['userLon'])
+
+    # get the list of items and markets
+    items = Item.objects.filter(name__in=names)
+    markets = Market.objects.all()
+
+    # get the list of available items for each market
+    market_items = []
+    for market in markets:
+        items_available = MarketItem.objects.filter(marketID=market, itemID__in=items)
+        item_ids = [item.itemID_id for item in items_available]
+        num_available = len(item_ids)
+        market_lat, market_lon = extract_lat_lon(market.location)
+
+        # set connection with google api using api key
+        gmaps_client = googlemaps.Client(key='AIzaSyBTSe2uK5-e9aS35lkm5sz_y3z3AF67H0w')
+        source = f'{user_lat},{user_lon}'
+        destination = f'{market_lat},{market_lon}'
+
+        # get all info distance matrix
+        direction_result = gmaps_client.directions(source,
+                                                   destination,
+                                                   mode="driving",
+                                                   avoid="ferries",
+                                                   departure_time=datetime.now(),
+                                                   transit_mode='car')
+
+        dist = direction_result[0]['legs'][0]['distance']
+        dist = dist['text']
+
+        # add new market object
+        market_items.append({
+            'marketName': market.name,
+            'itemsAvailable': num_available,
+            'distance': dist,
+            'locationLink': market.location
+        })
+
+    # return the list of available items for each market as a JSON response
+    return JsonResponse({'markets': market_items})
 
 
 # these all functions/views not used for now
