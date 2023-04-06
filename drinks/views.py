@@ -5,8 +5,7 @@ from django.db.models import Window
 from django.db.models import F
 from django.db.models.functions import RowNumber
 from rest_framework.generics import get_object_or_404
-from vincenty import vincenty
-from .serializer import IngredientSerializer, RecipeSerializer, RecipeCategorySerializer, StepSerializer, \
+from .serializer import IngredientSerializer, RecipeCategorySerializer, StepSerializer, \
     UserSerializer, ShoppingListCategorySerializer, ShoppingListItemSerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem, \
     Market, MarketItem
@@ -14,7 +13,7 @@ from pytube import YouTube
 from googleapiclient.discovery import build
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status, serializers
+from rest_framework import status
 import json
 from django.http import JsonResponse, HttpResponseBadRequest
 from recipe_scrapers import scrape_me
@@ -25,8 +24,7 @@ from django.shortcuts import render
 import pandas as pd
 import requests
 import re
-from geopy.distance import distance, Point
-from urllib.parse import urlparse, parse_qs
+
 
 def home(request):
     context = {'title': 'Whisk App'}
@@ -811,7 +809,7 @@ def extract_lat_lon(gmaps_link):
     url = gmaps_link
     lat_lon_regex = re.compile(r'\/@([-+]?\d*\.\d+),([-+]?\d*\.\d+)')
     match = lat_lon_regex.search(url)
-
+    print(match)
     if match:
         lat = float(match.group(1))
         lon = float(match.group(2))
@@ -839,6 +837,7 @@ def check_availability(request):
         items_available = MarketItem.objects.filter(marketID=market, itemID__in=items)
         item_ids = [item.itemID_id for item in items_available]
         num_available = len(item_ids)
+        print(market.location)
         market_lat, market_lon = extract_lat_lon(market.location)
 
         # set connection with google api using api key
