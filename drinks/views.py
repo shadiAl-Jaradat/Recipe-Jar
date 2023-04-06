@@ -809,7 +809,7 @@ def extract_lat_lon(gmaps_link):
     url = gmaps_link
     lat_lon_regex = re.compile(r'\/@([-+]?\d*\.\d+),([-+]?\d*\.\d+)')
     match = lat_lon_regex.search(url)
-
+    print(match)
     if match:
         lat = float(match.group(1))
         lon = float(match.group(2))
@@ -837,6 +837,7 @@ def check_availability(request):
         items_available = MarketItem.objects.filter(marketID=market, itemID__in=items)
         item_ids = [item.itemID_id for item in items_available]
         num_available = len(item_ids)
+        print(market.location)
         market_lat, market_lon = extract_lat_lon(market.location)
 
         # set connection with google api using api key
