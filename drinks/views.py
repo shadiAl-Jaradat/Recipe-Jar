@@ -834,7 +834,21 @@ def check_availability(request):
     # get the list of available items for each market
     market_items = []
     for market in markets:
+
         items_available = MarketItem.objects.filter(marketID=market, itemID__in=items)
+        item_names_available = list(items_available.values_list('itemID__name', flat=True))
+
+        available_items = [(name, name in item_names_available) for name in names]
+
+        list_of_available_items = []
+        for name in names:
+            list_of_available_items.append(
+                {
+                    "itemName": name,
+                    "isAvailable": name in item_names_available,
+                }
+            )
+
         item_ids = [item.itemID_id for item in items_available]
         num_available = len(item_ids)
         print(market.location)
@@ -859,7 +873,8 @@ def check_availability(request):
         # add new market object
         market_items.append({
             'marketName': market.name,
-            'itemsAvailable': num_available,
+            'numAvailableItems': num_available,
+            'availableItems': list_of_available_items,
             'distance': dist,
             'locationLink': market.location
         })
