@@ -495,7 +495,7 @@ def get_recipe_information_web_extension(request):
                 unit = quants[0].unit.name
 
             if unit == 'dimensionless':
-                unit = ""
+                unit = None
 
             ingredient_parce_name = parse(convert_fraction(ingredient))
 
@@ -507,6 +507,7 @@ def get_recipe_information_web_extension(request):
                     'orderID': -1
                 }
             )
+
 
         for step in scraper.instructions_list():
             steps.append(
@@ -551,14 +552,16 @@ def get_video(query):
     for search_result in search_response.get('items', []):
         video_id = search_result['id']['videoId']
         video_url = f'https://www.youtube.com/watch?v={video_id}'
-        video = YouTube(video_url)
-        if video.views > max_views:
-            max_views = video.views
+        video_info = youtube.videos().list(part='statistics', id=video_id).execute()
+        views = video_info['items'][0]['statistics']['viewCount']
+        video_info_two = youtube.videos().list(part='snippet', id=video_id).execute()
+        title = video_info_two['items'][0]['snippet']['title']
+        thumbnail_url = video_info_two['items'][0]['snippet']['thumbnails']['high']['url']
+        if int(views) > int(max_views):
+            max_views = views
             link_of_max_views = video_url
-            title_of_max_views = video.title
-            image_of_max_views = video.thumbnail_url
-        else:
-            break
+            title_of_max_views = title
+            image_of_max_views = thumbnail_url
     data = {
         'youtubeLink': link_of_max_views,
         'title': title_of_max_views,
