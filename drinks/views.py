@@ -498,7 +498,7 @@ def get_recipe_information_web_extension(request):
                 unit = None
 
             ingredient_parce_name = parse(convert_fraction(ingredient))
-
+#ss
             ingredients.append(
                 {
                     'name': ingredient_parce_name['name'],
