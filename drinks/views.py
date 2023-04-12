@@ -748,9 +748,14 @@ def add_new_shopping_list_item(request):
             isCheck=is_check,
             orderNumber=order_number
         )
+        shopping_list_item_info = {
+            "id": item_uuid,
+            "name": shopping_list_item_name,
+            "isCheck": is_check,
+            "orderID": order_number
+        }
         shopping_list_item.save()
-        serialized_shopping_list_item = ShoppingListItemSerializer(shopping_list_item)
-        return JsonResponse(serialized_shopping_list_item.data, status=status.HTTP_200_OK)
+        return JsonResponse(shopping_list_item_info, status=status.HTTP_200_OK)
     else:
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -772,18 +777,15 @@ def delete_shopping_list_item(request):
 
 
 @api_view(['POST'])
-def toggle_item_status(request):
+def toggle_items_status(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        item_id = data['itemID']
-        item = ShoppingListItem.objects.get(pk=item_id)
-        if item.isCheck:
-            item.isCheck = False
-        else:
-            item.isCheck = True
-        item.save()
-        new_status = str(item.isCheck)
-        return JsonResponse({'message': f'item status = {new_status}'}, status=status.HTTP_200_OK)
+        item_ids = data.get('itemIDs', [])
+        for item_id in item_ids:
+            item = ShoppingListItem.objects.get(pk=item_id)
+            item.isCheck = not item.isCheck
+            item.save()
+        return JsonResponse({'message': 'items status updated successfully'}, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 

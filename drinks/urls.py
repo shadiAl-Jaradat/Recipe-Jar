@@ -40,6 +40,6 @@ urlpatterns = [
     path('checkAvailability/', views.check_availability),
     # Shopping List Item
     path('addNewItemToShoppingList/', views.add_new_shopping_list_item),
-    path('toggleItemStatus/', views.toggle_item_status),
+    path('toggleItemsStatus/', views.toggle_items_status),
     path('deleteShoppingListItem/', views.delete_shopping_list_item)
 ]
