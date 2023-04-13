@@ -136,18 +136,51 @@ def create_user(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         user = User(
-            id=UUID(data['userID']),
+            id=data['userID'],
             firstName=data['firstName'],
             lastName=data['lastName'],
             phoneNumber=data['phoneNumber'],
             age=data['age'],
-            dateOfBirth=data['dateOfBirth'],
             weight=data['weight'],
             height=data['height'],
         )
         user.save()
         serialized_user = UserSerializer(user)
         return JsonResponse(serialized_user.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+def add_recipe(request):
+    recipe_name = request.data['recipe_name']
+    user_id = request.data['user_id']
+
+    # Retrieve the user object from the database
+    user = User.objects.get(id=user_id)
+
+    # Retrieve the serialized string from the recentlyRecipesAdded field and convert it to a list
+    serialized_list = user.recentlyRecipesAdded
+    if serialized_list:
+        recipe_list = serialized_list.split(',')
+    else:
+        recipe_list = []
+
+    # Append the new recipe to the end of the list and remove the first element if the length of the list exceeds 4
+    recipe_list.append(recipe_name)
+    if len(recipe_list) > 4:
+        recipe_list.pop(0)
+
+    # Serialize the updated list back to a string and save it in the recentlyRecipesAdded field
+    updated_serialized_list = ','.join(recipe_list)
+    user.recentlyRecipesAdded = updated_serialized_list
+    user.save()
+
+    return Response({'list': user.recentlyRecipesAdded})
+
+
+
+
+
+
 
 
 @api_view(['POST'])

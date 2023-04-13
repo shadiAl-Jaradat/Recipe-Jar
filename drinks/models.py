@@ -4,14 +4,15 @@ from django.db import models
 
 
 class User(models.Model):
-    id = models.UUIDField(primary_key=True)
+    id = models.CharField(primary_key=True, max_length=255)
     firstName = models.CharField(max_length=100)
     lastName = models.CharField(max_length=100)
     phoneNumber = models.CharField(max_length=100)
     age = models.PositiveIntegerField(null=True)
-    dateOfBirth = models.DateTimeField(null=True)
     weight = models.FloatField(null=True)
     height = models.FloatField(null=True)
+    selectedShoppingList = models.CharField(max_length=150, null=True)
+    recentlyRecipesAdded = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return self.firstName
