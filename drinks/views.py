@@ -4,6 +4,7 @@ import googlemaps
 from django.db.models import Window
 from django.db.models import F
 from django.db.models.functions import RowNumber
+from googleapiclient.errors import HttpError
 from rest_framework.generics import get_object_or_404
 from .serializer import IngredientSerializer, RecipeCategorySerializer, StepSerializer, \
     UserSerializer, ShoppingListCategorySerializer, ShoppingListItemSerializer
@@ -570,36 +571,65 @@ def get_recipe_information_web_extension(request):
 
 
 def get_video(query):
-    api_key = 'AIzaSyC1xBiPhp9D2UIh4dIeGjlex90s3BZ5me4'
+    # Set the API key
+    api_key = 'AIzaSyCi6S6uY5QpEI8MRZ7z2VJTH69sOI_SMuM'
+
+    # Build the YouTube API client
     youtube = build('youtube', 'v3', developerKey=api_key)
-    search_response = youtube.search().list(
-        q=query + ' recipe',
-        type='video',
-        part='id,snippet',
-        maxResults=30
-    ).execute()
+
+    try:
+        # Search for videos matching the query, sorted by view count in descending order
+        search_response = youtube.search().list(
+            q=query + ' recipe',
+            type='video',
+            part='id',
+            maxResults=30,
+            order='viewCount',
+            fields='items(id(videoId))'
+        ).execute()
+
+        # Extract the video IDs from the search results
+        video_ids = [search_result['id']['videoId'] for search_result in search_response['items']]
+
+        # Retrieve video information (title, thumbnail, view count) for the matching videos
+        video_info = youtube.videos().list(
+            part='snippet,statistics',
+            id=','.join(video_ids),
+            fields='items(id,snippet(title,thumbnails/high/url),statistics(viewCount))'
+        ).execute()
+
+    except HttpError as error:
+        print('An error occurred: %s' % error)
+
+    # Initialize variables for tracking the video with the most views
     max_views = 0
     link_of_max_views = ""
     title_of_max_views = ""
     image_of_max_views = ""
-    for search_result in search_response.get('items', []):
-        video_id = search_result['id']['videoId']
+
+    # Loop through the retrieved video information to find the video with the most views
+    for video_result in video_info['items']:
+        video_id = video_result['id']
         video_url = f'https://www.youtube.com/watch?v={video_id}'
-        video_info = youtube.videos().list(part='statistics', id=video_id).execute()
-        views = video_info['items'][0]['statistics']['viewCount']
-        video_info_two = youtube.videos().list(part='snippet', id=video_id).execute()
-        title = video_info_two['items'][0]['snippet']['title']
-        thumbnail_url = video_info_two['items'][0]['snippet']['thumbnails']['high']['url']
+        views = video_result['statistics']['viewCount']
+        title = video_result['snippet']['title']
+        thumbnail_url = video_result['snippet']['thumbnails']['high']['url']
+
+        # Update the variables tracking the video with the most views if this video has more views
         if int(views) > int(max_views):
             max_views = views
             link_of_max_views = video_url
             title_of_max_views = title
             image_of_max_views = thumbnail_url
+
+    # Create a dictionary with the information about the video with the most views
     data = {
         'youtubeLink': link_of_max_views,
         'title': title_of_max_views,
         'image': image_of_max_views
     }
+
+    # Return the dictionary
     return data
 
 
