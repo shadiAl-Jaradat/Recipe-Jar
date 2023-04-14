@@ -43,5 +43,7 @@ urlpatterns = [
     path('toggleItemsStatus/', views.toggle_items_status),
     path('deleteShoppingListItem/', views.delete_shopping_list_item),
     # ddd
-    path('addRecipeToUserList/', views.add_recipe)
+    path('addRecipeToUserList/', views.add_recipe),
+    # Home Screen
+    path('selectShoppingListInHomeScreen/', views.select_shopping_list_in_home_screen)
 ]
