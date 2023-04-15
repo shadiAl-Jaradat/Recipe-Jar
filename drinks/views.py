@@ -7,10 +7,9 @@ from django.db.models.functions import RowNumber
 from googleapiclient.errors import HttpError
 from rest_framework.generics import get_object_or_404
 from .serializer import IngredientSerializer, RecipeCategorySerializer, StepSerializer, \
-    UserSerializer, ShoppingListCategorySerializer, ShoppingListItemSerializer
+    UserSerializer, ShoppingListCategorySerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem, \
     Market, MarketItem
-from pytube import YouTube
 from googleapiclient.discovery import build
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -523,7 +522,7 @@ def get_recipe_information_web_extension(request):
             quants = parser.parse(ingredient)
             if quants.__len__() == 0:
                 quantity = None
-                unit = ""
+                unit = None
             else:
                 quantity = quants[0].value
                 unit = quants[0].unit.name
@@ -532,16 +531,19 @@ def get_recipe_information_web_extension(request):
                 unit = None
 
             ingredient_parce_name = parse(convert_fraction(ingredient))
-#ss
+            if ',' in ingredient_parce_name['name']:
+                ingredient_parce_name = ingredient_parce_name['name'].split(',')[0]
+            else:
+                ingredient_parce_name = ingredient_parce_name['name']
+
             ingredients.append(
                 {
-                    'name': ingredient_parce_name['name'],
+                    'name': ingredient_parce_name,
                     'quantity': quantity,
                     'unit': unit,
                     'orderID': -1
                 }
             )
-
 
         for step in scraper.instructions_list():
             steps.append(
@@ -551,9 +553,14 @@ def get_recipe_information_web_extension(request):
                 }
             )
 
+        try:
+            time = scraper.cook_time()
+        except:
+            time = None
+
         recipe_data = {
             'name': scraper.title(),
-            'time': scraper.total_time(),
+            'time': time,
             'pictureUrl': scraper.image(),
             'videoUrl': get_video(scraper.title()),
             'isEditorChoice': False,
@@ -640,6 +647,9 @@ def convert_fraction(string):
     elif '¼' in string:
         fraction = unicodedata.numeric('¼')
         string = string.replace('¼', str(fraction))
+    elif '¾' in string:
+        fraction = unicodedata.numeric('¾')
+        string = string.replace('¾', str(fraction))
     return string
 
 
@@ -1008,6 +1018,69 @@ def select_shopping_list_in_home_screen(request):
         return JsonResponse(category_data, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# @api_view(['POST'])
+# def get_home_screen_data(request):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
+#         user_id = data['userID']
+#
+#         # check if user id sent
+#         if not user_id:
+#             return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+#         try:
+#             user = User.objects.get(pk=user_id)
+#         except User.DoesNotExist:
+#             return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+#
+#         # get the id of selected shopping list of user
+#         selected_shopping_list_id = user.selectedShoppingList
+#
+#         # check if selected_shopping_list_id if its null or empty
+#         if selected_shopping_list_id is None or selected_shopping_list_id == "":
+#             # TODO :  must return empty object of shopping list
+#             print("no selected shopping list ")
+#         try:
+#             shopping_list_category = ShoppingListCategory.objects.get(pk=selected_shopping_list_id)
+#         except ShoppingListCategory.DoesNotExist:
+#             print("selected shopping list is deleted")
+#             return Response({"error": f"Category with ID {selected_shopping_list_id} does not exist."},
+#                             status=status.HTTP_404_NOT_FOUND)
+#
+#         # get name of shopping list
+#         selected_shopping_list_name = shopping_list_category.name
+#
+#         # get 4 items of shopping list
+#         shopping_list_items = ShoppingListItem.objects.annotate(
+#             orderNumberNEW=Window(
+#                 expression=RowNumber(),
+#                 order_by=F('orderNumber').asc()
+#             )
+#         ).filter(categoryID=shopping_list_category).order_by('orderNumber')
+#         shopping_list_items = shopping_list_items.exclude(orderNumber__isnull=True).values('id', 'itemID', 'isCheck',
+#                                                                                            'orderNumberNEW')
+#
+#         new_list_of_items = []
+#         for shopping_list_item in shopping_list_items:
+#             # get name of Item using ItemID
+#             item_id = shopping_list_item['itemID']
+#             item_from_db = Item.objects.get(id=item_id)
+#             new_list_of_items.append(
+#                 {
+#                     'id': shopping_list_item['id'],
+#                     'name': item_from_db.name,
+#                     'isCheck': shopping_list_item['isCheck'],
+#                     'orderID': shopping_list_item['orderNumberNEW']
+#                 }
+#             )
+#             if shopping_list_item['orderNumberNEW'] == 4:
+#                 break
+#
+#
+#
+#     else:
+#         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # these all functions/views not used for now
