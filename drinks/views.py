@@ -898,8 +898,8 @@ def extract_lat_lon(gmaps_link):
 
 @api_view(['POST'])
 def check_availability(request):
-    # get the list of names from the request
     data = json.loads(request.body)
+    # get the list of items names from the request
     names = data['listOfItemsNames']
     # get the user's latitude and longitude from the request
     user_lat = float(data['userLat'])
@@ -951,10 +951,11 @@ def check_availability(request):
         # add new market object
         market_items.append({
             'marketName': market.name,
-            'numAvailableItems': num_available,
-            'availableItems': list_of_available_items,
+            'marketLogo': market.logo,
+            'locationLink': market.location,
             'distance': dist,
-            'locationLink': market.location
+            'numAvailableItems': num_available,
+            'availableItems': list_of_available_items
         })
 
     # return the list of available items for each market as a JSON response
