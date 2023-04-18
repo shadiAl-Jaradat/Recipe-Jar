@@ -959,7 +959,7 @@ def check_availability(request):
         })
 
     # return the list of available items for each market as a JSON response
-    return JsonResponse({'markets': market_items})
+    return Response(market_items, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -1021,67 +1021,73 @@ def select_shopping_list_in_home_screen(request):
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# @api_view(['POST'])
-# def get_home_screen_data(request):
-#     if request.method == 'POST':
-#         data = json.loads(request.body)
-#         user_id = data['userID']
-#
-#         # check if user id sent
-#         if not user_id:
-#             return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
-#         try:
-#             user = User.objects.get(pk=user_id)
-#         except User.DoesNotExist:
-#             return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
-#
-#         # get the id of selected shopping list of user
-#         selected_shopping_list_id = user.selectedShoppingList
-#
-#         # check if selected_shopping_list_id if its null or empty
-#         if selected_shopping_list_id is None or selected_shopping_list_id == "":
-#             # TODO :  must return empty object of shopping list
-#             print("no selected shopping list ")
-#         try:
-#             shopping_list_category = ShoppingListCategory.objects.get(pk=selected_shopping_list_id)
-#         except ShoppingListCategory.DoesNotExist:
-#             print("selected shopping list is deleted")
-#             return Response({"error": f"Category with ID {selected_shopping_list_id} does not exist."},
-#                             status=status.HTTP_404_NOT_FOUND)
-#
-#         # get name of shopping list
-#         selected_shopping_list_name = shopping_list_category.name
-#
-#         # get 4 items of shopping list
-#         shopping_list_items = ShoppingListItem.objects.annotate(
-#             orderNumberNEW=Window(
-#                 expression=RowNumber(),
-#                 order_by=F('orderNumber').asc()
-#             )
-#         ).filter(categoryID=shopping_list_category).order_by('orderNumber')
-#         shopping_list_items = shopping_list_items.exclude(orderNumber__isnull=True).values('id', 'itemID', 'isCheck',
-#                                                                                            'orderNumberNEW')
-#
-#         new_list_of_items = []
-#         for shopping_list_item in shopping_list_items:
-#             # get name of Item using ItemID
-#             item_id = shopping_list_item['itemID']
-#             item_from_db = Item.objects.get(id=item_id)
-#             new_list_of_items.append(
-#                 {
-#                     'id': shopping_list_item['id'],
-#                     'name': item_from_db.name,
-#                     'isCheck': shopping_list_item['isCheck'],
-#                     'orderID': shopping_list_item['orderNumberNEW']
-#                 }
-#             )
-#             if shopping_list_item['orderNumberNEW'] == 4:
-#                 break
-#
-#
-#
-#     else:
-#         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+@api_view(['POST'])
+def get_home_screen_data(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user_id = data['userID']
+
+        # check if user id sent
+        if not user_id:
+            return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        # get the id of selected shopping list of user
+        selected_shopping_list_id = user.selectedShoppingList
+
+        # check if selected_shopping_list_id if its null or empty
+        if selected_shopping_list_id is None or selected_shopping_list_id == "":
+            # TODO :  must return empty object of shopping list
+            print("no selected shopping list ")
+        try:
+            shopping_list_category = ShoppingListCategory.objects.get(pk=selected_shopping_list_id)
+        except ShoppingListCategory.DoesNotExist:
+            print("selected shopping list is deleted")
+            return Response({"error": f"Category with ID {selected_shopping_list_id} does not exist."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        # get name of shopping list
+        selected_shopping_list_name = shopping_list_category.name
+
+        # get 4 items of shopping list
+        shopping_list_items = ShoppingListItem.objects.annotate(
+            orderNumberNEW=Window(
+                expression=RowNumber(),
+                order_by=F('orderNumber').asc()
+            )
+        ).filter(categoryID=shopping_list_category).order_by('orderNumber')
+        shopping_list_items = shopping_list_items.exclude(orderNumber__isnull=True).values('id', 'itemID', 'isCheck',
+                                                                                           'orderNumberNEW')
+
+        new_list_of_items = []
+        for shopping_list_item in shopping_list_items:
+            # get name of Item using ItemID
+            item_id = shopping_list_item['itemID']
+            item_from_db = Item.objects.get(id=item_id)
+            new_list_of_items.append(
+                {
+                    'id': shopping_list_item['id'],
+                    'name': item_from_db.name,
+                    'isCheck': shopping_list_item['isCheck'],
+                    'orderID': shopping_list_item['orderNumberNEW']
+                }
+            )
+            if shopping_list_item['orderNumberNEW'] == 4:
+                break
+
+        serialized_list = user.recentlyRecipesAdded
+        if serialized_list:
+            recipe_list = serialized_list.split(',')
+        else:
+            recipe_list = []
+
+        updated_serialized_list = ','.join(recipe_list)
+
+    else:
+        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # these all functions/views not used for now
