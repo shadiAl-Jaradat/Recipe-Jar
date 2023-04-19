@@ -45,5 +45,6 @@ urlpatterns = [
     # ddd
     path('addRecipeToUserList/', views.add_recipe),
     # Home Screen
-    path('selectShoppingListInHomeScreen/', views.select_shopping_list_in_home_screen)
+    path('selectShoppingListInHomeScreen/', views.select_shopping_list_in_home_screen),
+    path('getHomeScreenData/', views.get_home_screen_data)
 ]

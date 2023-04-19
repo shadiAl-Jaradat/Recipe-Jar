@@ -951,7 +951,8 @@ def check_availability(request):
         # add new market object
         market_items.append({
             'marketName': market.name,
-            'marketLogo': market.logo,
+            'marketLat': str(market_lat),
+            'marketLon': str(market_lon),
             'locationLink': market.location,
             'distance': dist,
             'numAvailableItems': num_available,
@@ -1041,51 +1042,83 @@ def get_home_screen_data(request):
         # check if selected_shopping_list_id if its null or empty
         if selected_shopping_list_id is None or selected_shopping_list_id == "":
             # TODO :  must return empty object of shopping list
+            returned_shopping_list = None
             print("no selected shopping list ")
         try:
             shopping_list_category = ShoppingListCategory.objects.get(pk=selected_shopping_list_id)
+
+            # get 4 items of shopping list
+            shopping_list_items = ShoppingListItem.objects.annotate(
+                orderNumberNEW=Window(
+                    expression=RowNumber(),
+                    order_by=F('orderNumber').asc()
+                )
+            ).filter(categoryID=shopping_list_category).order_by('orderNumber')
+            shopping_list_items = shopping_list_items.exclude(orderNumber__isnull=True).values('id', 'itemID',
+                                                                                               'isCheck',
+                                                                                               'orderNumberNEW')
+
+            new_list_of_items = []
+            for shopping_list_item in shopping_list_items:
+                # get name of Item using ItemID
+                item_id = shopping_list_item['itemID']
+                item_from_db = Item.objects.get(id=item_id)
+                new_list_of_items.append(
+                    {
+                        'id': shopping_list_item['id'],
+                        'name': item_from_db.name,
+                        'isCheck': shopping_list_item['isCheck'],
+                        'orderID': shopping_list_item['orderNumberNEW']
+                    }
+                )
+                if shopping_list_item['orderNumberNEW'] == 4:
+                    break
+
+            returned_shopping_list = {
+                "ShoppingListName": shopping_list_category.name,
+                "items": new_list_of_items
+            }
         except ShoppingListCategory.DoesNotExist:
             print("selected shopping list is deleted")
-            return Response({"error": f"Category with ID {selected_shopping_list_id} does not exist."},
-                            status=status.HTTP_404_NOT_FOUND)
+            returned_shopping_list = None
 
-        # get name of shopping list
-        selected_shopping_list_name = shopping_list_category.name
-
-        # get 4 items of shopping list
-        shopping_list_items = ShoppingListItem.objects.annotate(
-            orderNumberNEW=Window(
-                expression=RowNumber(),
-                order_by=F('orderNumber').asc()
-            )
-        ).filter(categoryID=shopping_list_category).order_by('orderNumber')
-        shopping_list_items = shopping_list_items.exclude(orderNumber__isnull=True).values('id', 'itemID', 'isCheck',
-                                                                                           'orderNumberNEW')
-
-        new_list_of_items = []
-        for shopping_list_item in shopping_list_items:
-            # get name of Item using ItemID
-            item_id = shopping_list_item['itemID']
-            item_from_db = Item.objects.get(id=item_id)
-            new_list_of_items.append(
-                {
-                    'id': shopping_list_item['id'],
-                    'name': item_from_db.name,
-                    'isCheck': shopping_list_item['isCheck'],
-                    'orderID': shopping_list_item['orderNumberNEW']
-                }
-            )
-            if shopping_list_item['orderNumberNEW'] == 4:
-                break
 
         serialized_list = user.recentlyRecipesAdded
         if serialized_list:
-            recipe_list = serialized_list.split(',')
+            recipe_id_list = serialized_list.split(',')
         else:
-            recipe_list = []
+            recipe_id_list = []
 
-        updated_serialized_list = ','.join(recipe_list)
+        returned_recently_recipe_added = []
+        order = 1
+        for recipeID in reversed(recipe_id_list):
+            try:
+                recipe = Recipe.objects.get(id=recipeID)
+                video_data = {
+                    'youtubeLink': recipe.videoUrl,
+                    'title': recipe.videoTitle,
+                    'image': recipe.videoImage,
+                }
+                recipe_data = {
+                    'id': recipe.id,
+                    'name': recipe.title,
+                    'time': recipe.time,
+                    'pictureUrl': recipe.pictureUrl,
+                    'videoUrl': video_data,
+                    'orderID': order,
+                }
+                returned_recently_recipe_added.append(recipe_data)
+                order += 1
+            except:
+                continue
+                pass
 
+        returned_data = {
+            "recentlyAdded": returned_recently_recipe_added,
+            "selectedShoppingList": returned_shopping_list
+        }
+
+        return Response(returned_data, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
