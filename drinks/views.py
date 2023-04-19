@@ -902,6 +902,9 @@ def check_availability(request):
     # get the list of items names from the request
     names = data['listOfItemsNames']
     # get the user's latitude and longitude from the request
+    print("shady test ")
+    print(data['userLat'])
+    print(data['userLon'])
     user_lat = float(data['userLat'])
     user_lon = float(data['userLon'])
 
