@@ -954,6 +954,7 @@ def check_availability(request):
         # add new market object
         market_items.append({
             'marketName': market.name,
+            'marketLogo': market.logo,
             'marketLat': str(market_lat),
             'marketLon': str(market_lon),
             'locationLink': market.location,
