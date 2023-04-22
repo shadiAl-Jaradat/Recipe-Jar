@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 # ALL THESE CLASSES FOR WHISK APP #########################
 
@@ -39,6 +40,7 @@ class Recipe(models.Model):
     is_editor_choice = models.BooleanField(default=False)
     category = models.ForeignKey(RecipeCategory, on_delete=models.CASCADE, related_name='recipes')
     orderID = models.PositiveIntegerField()
+    dateAdded = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return self.title
