@@ -325,7 +325,7 @@ def get_all_recipes(request):
                                                                                              'videoTitle', 'videoImage',
                                                                                              'title', 'time',
                                                                                              'pictureUrl',
-                                                                                             'is_editor_choice',
+                                                                                             'isEditorChoice',
                                                                                              'orderIDNEW')
         new_list_of_recipes = []
 
@@ -341,7 +341,7 @@ def get_all_recipes(request):
                 'time': recipe['time'],
                 'pictureUrl': recipe['pictureUrl'],
                 'videoUrl': video_data,
-                'isEditorChoice': recipe['is_editor_choice'],
+                'isEditorChoice': recipe['isEditorChoice'],
                 'orderID': recipe['orderIDNEW']
             }
             new_list_of_recipes.append(recipe_data)
@@ -420,7 +420,7 @@ def get_recipe_steps(request):
 
 
 @api_view(['POST'])
-def save_recipe_two(request):
+def save_recipe(request):
     # global item_from_db, unit_from_db
     if request.method == 'POST':
         try:
@@ -436,18 +436,43 @@ def save_recipe_two(request):
             is_editor_choice = data['isEditorChoice']
             ingredients = data['ingredients']
             steps = data['steps']
+            user_id = data['userID']
+
+            # check anf get user object from DB
+            if not user_id:
+                return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                user = User.objects.get(pk=user_id)
+            except:
+                return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+            if not category_id:
+                return Response({"error": "category_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                category = RecipeCategory.objects.get(pk=category_id)
+            except:
+                return Response({"error": f"category with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
             # Check if the category exists in the database
-            category = RecipeCategory.objects.get(pk=category_id)
+            # category = RecipeCategory.objects.get(pk=category_id)
 
             # Get existing recipes in the same category
             existing_recipes = Recipe.objects.filter(category=category)
 
             # Set the orderID for the new recipe
             order_id = len(existing_recipes) + 1
-            recipe = Recipe(id=uuid4(), title=recipe_name, time=time, pictureUrl=picture_url,
-                            videoUrl=video_url, videoImage=video_image, videoTitle=video_title,
-                            is_editor_choice=is_editor_choice, category=category, orderID=order_id)
+            recipe = Recipe(id=uuid4(),
+                            title=recipe_name,
+                            time=time,
+                            pictureUrl=picture_url,
+                            videoUrl=video_url,
+                            videoImage=video_image,
+                            videoTitle=video_title,
+                            isEditorChoice=is_editor_choice,
+                            category=category,
+                            userID=user,
+                            orderID=order_id
+                            )
             recipe.save()
 
             for ingredient in ingredients:
@@ -493,7 +518,7 @@ def save_recipe_two(request):
 
         except (KeyError, ValueError, TypeError, RecipeCategory.DoesNotExist, Item.DoesNotExist):
             # Return an error response if the request is not properly formatted or the category or item do not exist
-            return JsonResponse({'error': 'Invalid request.'}, status=400)
+            return JsonResponse({'error': ValueError}, status=400)
 
     # Return an error response if the request method is not POST
     return JsonResponse({'error': 'Invalid request method.'}, status=405)
@@ -1141,7 +1166,7 @@ def recipe_information_customized(request):
                 'title': scraper.title(),
                 'time': scraper.total_time(),
                 'picture_url': scraper.image(),
-                'is_editor_choice': True,
+                'isEditorChoice': True,
                 'ingredients': scraper.ingredients()
             }
             return JsonResponse(data)

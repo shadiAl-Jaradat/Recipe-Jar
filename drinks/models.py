@@ -37,10 +37,11 @@ class Recipe(models.Model):
     videoUrl = models.CharField(max_length=500, null=True)
     videoImage = models.CharField(max_length=500, null=True)
     videoTitle = models.CharField(max_length=500, null=True)
-    is_editor_choice = models.BooleanField(default=False)
+    isEditorChoice = models.BooleanField(default=False)
     category = models.ForeignKey(RecipeCategory, on_delete=models.CASCADE, related_name='recipes')
     orderID = models.PositiveIntegerField()
     dateAdded = models.DateTimeField(default=timezone.now)
+    userID = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipesAdded')
 
     def __str__(self):
         return self.title
