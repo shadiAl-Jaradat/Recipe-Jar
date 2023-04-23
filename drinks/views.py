@@ -7,7 +7,7 @@ from django.db.models.functions import RowNumber
 from googleapiclient.errors import HttpError
 from rest_framework.generics import get_object_or_404
 from .serializer import IngredientSerializer, RecipeCategorySerializer, StepSerializer, \
-    UserSerializer, ShoppingListCategorySerializer
+    UserSerializer, ShoppingListCategorySerializer, RecipeSerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem, \
     Market, MarketItem
 from googleapiclient.discovery import build
@@ -1111,36 +1111,43 @@ def get_home_screen_data(request):
             print("selected shopping list is deleted")
             returned_shopping_list = None
 
+        # Get the four newest recipes for the user and sort the recipes by orderID,
+        # and assign new orderIDs based on the new order
+        # recently_added_recipes = Recipe.objects.filter(userID=user_id).exclude(orderID__isnull=True).order_by(
+        #     '-dateAdded').annotate(
+        #     new_orderID=Window(
+        #         expression=RowNumber(),
+        #         order_by=F('orderID').asc()
+        #     )
+        # ).order_by('orderID')[:4].values('id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time',
+        #                                      'pictureUrl', 'isEditorChoice', 'orderIDNEW')
 
-        serialized_list = user.recentlyRecipesAdded
-        if serialized_list:
-            recipe_id_list = serialized_list.split(',')
-        else:
-            recipe_id_list = []
+        recently_added_recipes = Recipe.objects.annotate(
+            orderIDNEW=Window(
+                expression=RowNumber(),
+            )
+        ).filter(userID=user_id).order_by('-dateAdded').exclude(orderID__isnull=True)[:4].values(
+            'id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
 
         returned_recently_recipe_added = []
         order = 1
-        for recipeID in reversed(recipe_id_list):
-            try:
-                recipe = Recipe.objects.get(id=recipeID)
-                video_data = {
-                    'youtubeLink': recipe.videoUrl,
-                    'title': recipe.videoTitle,
-                    'image': recipe.videoImage,
-                }
-                recipe_data = {
-                    'id': recipe.id,
-                    'name': recipe.title,
-                    'time': recipe.time,
-                    'pictureUrl': recipe.pictureUrl,
-                    'videoUrl': video_data,
-                    'orderID': order,
-                }
-                returned_recently_recipe_added.append(recipe_data)
-                order += 1
-            except:
-                continue
-                pass
+        for recipe in recently_added_recipes:
+            video_data = {
+                'youtubeLink': recipe['videoUrl'],
+                'title': recipe['videoTitle'],
+                'image': recipe['videoImage'],
+            }
+            recipe_data = {
+                'id': recipe['id'],
+                'name': recipe['title'],
+                'time': recipe['time'],
+                'pictureUrl': recipe['pictureUrl'],
+                'videoUrl': video_data,
+                'isEditorChoice': recipe['isEditorChoice'],
+                'orderID': order
+            }
+            returned_recently_recipe_added.append(recipe_data)
+            order += 1
 
         returned_data = {
             "recentlyAdded": returned_recently_recipe_added,
