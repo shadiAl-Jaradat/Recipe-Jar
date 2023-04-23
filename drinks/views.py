@@ -150,6 +150,43 @@ def create_user(request):
 
 
 @api_view(['POST'])
+def get_user_data(request):
+    if request.method == 'POST':
+        user_id = request.data.get('userID')
+        if not user_id:
+            return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(pk=user_id)
+        except:
+            return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        serialized_user = UserSerializer(user)
+        return JsonResponse(serialized_user.data, status=status.HTTP_200_OK)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def update_user_data(request):
+    if request.method == 'POST':
+        user_id = request.data.get('id')
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
 def add_recipe(request):
     recipe_name = request.data['recipe_name']
     user_id = request.data['user_id']
@@ -175,32 +212,6 @@ def add_recipe(request):
     user.save()
 
     return Response({'list': user.recentlyRecipesAdded})
-
-
-
-
-
-
-
-
-@api_view(['POST'])
-def update_user_data(request):
-    if request.method == 'POST':
-        user_id = request.data.get('id')
-
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        serializer = UserSerializer(user, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    else:
-        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
@@ -1159,61 +1170,7 @@ def get_home_screen_data(request):
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
-# these all functions/views not used for now
-
-
-@api_view(['POST'])
-def recipe_information_customized(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            website_url = data['website_url']
-            scraper = scrape_me(website_url)
-            data = {
-                'title': scraper.title(),
-                'time': scraper.total_time(),
-                'picture_url': scraper.image(),
-                'isEditorChoice': True,
-                'ingredients': scraper.ingredients()
-            }
-            return JsonResponse(data)
-        except:
-            return HttpResponseBadRequest("Bad Request: Invalid request body")
-    else:
-        return HttpResponseBadRequest("Bad Request: Only POST requests are allowed")
-
-
-@api_view(['POST'])
-def recipe_information_origin(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body)
-            website_url = data['website_url']
-            scraper = scrape_me(website_url)
-            return Response(scraper.to_json(), status=status.HTTP_201_CREATED, )
-        except:
-            return HttpResponseBadRequest("Bad Request: Invalid request body")
-    else:
-        return HttpResponseBadRequest("Bad Request: Only POST requests are allowed")
-
-
-@api_view(['POST'])
-def ingredients_details(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        ingredient = data['ingredient']
-        quants = parser.parse(ingredient)
-        ingredient_parce_name = parse(convert_fraction(ingredient))
-
-        data = {
-            'name': ingredient_parce_name['name'],
-            'quantity': quants[0].value,
-            'unit': quants[0].unit.name,
-        }
-        return JsonResponse(data)
-    else:
-        return HttpResponseBadRequest("Bad Request: Only GET requests are allowed")
-
+# these all views not used for now
 
 @api_view(['GET'])
 def send_name(request, name):

@@ -8,7 +8,7 @@ from .models import User, Recipe, RecipeCategory, Ingredient, Step, ShoppingList
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = '__all__'
+        fields = ('id', 'firstName', 'lastName', 'phoneNumber', 'age', 'weight', 'height')
         extra_kwargs = {
             'firstName': {'required': False},
             'phoneNumber': {'required': False},

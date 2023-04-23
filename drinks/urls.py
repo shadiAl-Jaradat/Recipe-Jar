@@ -18,6 +18,7 @@ urlpatterns = [
     # user Apis
     path('createUser/', views.create_user, name=""),
     path('updateUserInfo/', views.update_user_data),
+    path('getUserData/', views.get_user_data),
     # webExtension Apis
     path('whiskApp/webExtension/getRecipeInformation/', views.get_recipe_information_web_extension, name="website_url"),
     path('whiskApp/webExtension/saveRecipeInfo/', views.save_recipe),

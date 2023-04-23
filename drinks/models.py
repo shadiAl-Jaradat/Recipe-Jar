@@ -13,7 +13,6 @@ class User(models.Model):
     weight = models.FloatField(null=True)
     height = models.FloatField(null=True)
     selectedShoppingList = models.CharField(max_length=150, null=True)
-    recentlyRecipesAdded = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return self.firstName
