@@ -11,10 +11,6 @@ urlpatterns = [
     path('change_market_location/', views.change_market_location, name="change_market_location"),
     path('get_market_data/', views.get_market_data, name='get_market_data'),
     path('getItemsFromExcel/', views.get_item_from_excel),
-    # Django Admin
-    path('admin/', admin.site.urls),
-    # test Api
-    path('sendAndGetMyName/<str:name>/', views.send_name,),
     # user Apis
     path('createUser/', views.create_user, name=""),
     path('updateUserInfo/', views.update_user_data),
@@ -32,7 +28,6 @@ urlpatterns = [
     path('getRecipeIngredients/', views.get_recipe_ingredients),
     path('getRecipeSteps/', views.get_recipe_steps),
     path('deleteRecipe/', views.delete_recipe),
-    path('getAllEditorsChoice/', views.get_all_editors_choice_recipes),
     # Shopping List Category
     path('createShoppingListCategory/', views.create_shopping_list_category),
     path('deleteShoppingListCategory/', views.delete_shopping_list_category),
@@ -44,9 +39,14 @@ urlpatterns = [
     path('addNewItemToShoppingList/', views.add_new_shopping_list_item),
     path('toggleItemsStatus/', views.toggle_items_status),
     path('deleteShoppingListItem/', views.delete_shopping_list_item),
-    # ddd
-    path('addRecipeToUserList/', views.add_recipe),
     # Home Screen
     path('selectShoppingListInHomeScreen/', views.select_shopping_list_in_home_screen),
-    path('getHomeScreenData/', views.get_home_screen_data)
+    path('getHomeScreenData/', views.get_home_screen_data),
+    path('getAllEditorsChoice/', views.get_all_editors_choice_recipes),
+    # Django Admin
+    path('admin/', admin.site.urls),
+    # test Api
+    path('sendAndGetMyName/<str:name>/', views.send_name, ),
 ]
+
+handler404 = 'drinks.views.error_404_view'

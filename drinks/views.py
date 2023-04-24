@@ -26,6 +26,10 @@ import requests
 import re
 
 
+def error_404_view(request, exception):
+    return render(request, 'whiskTemplates/404.html', status=404)
+
+
 def home(request):
     context = {'title': 'Whisk App'}
     return render(request, 'whiskTemplates/home.html', context)
@@ -184,34 +188,6 @@ def update_user_data(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['POST'])
-def add_recipe(request):
-    recipe_name = request.data['recipe_name']
-    user_id = request.data['user_id']
-
-    # Retrieve the user object from the database
-    user = User.objects.get(id=user_id)
-
-    # Retrieve the serialized string from the recentlyRecipesAdded field and convert it to a list
-    serialized_list = user.recentlyRecipesAdded
-    if serialized_list:
-        recipe_list = serialized_list.split(',')
-    else:
-        recipe_list = []
-
-    # Append the new recipe to the end of the list and remove the first element if the length of the list exceeds 4
-    recipe_list.append(recipe_name)
-    if len(recipe_list) > 4:
-        recipe_list.pop(0)
-
-    # Serialize the updated list back to a string and save it in the recentlyRecipesAdded field
-    updated_serialized_list = ','.join(recipe_list)
-    user.recentlyRecipesAdded = updated_serialized_list
-    user.save()
-
-    return Response({'list': user.recentlyRecipesAdded})
 
 
 @api_view(['POST'])

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 - Page Not Found</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap">
+  <style>
+      * {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+    body {
+      background-color: white;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 80px 20px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #7F5283;
+      font-size: 4rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-transform: uppercase;
+    }
+
+    p {
+      color: #7F5283;
+      font-size: 1.5rem;
+      margin-bottom: 40px;
+    }
+
+    .button {
+      background-color: #EDC432;
+      color: white;
+      display: inline-block;
+      font-size: 1.2rem;
+      font-weight: 600;
+      padding: 15px 30px;
+      text-decoration: none;
+      text-transform: uppercase;
+      transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    }
+
+    .button:hover {
+      background-color: #7F5283;
+      color: white;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>404 - Page Not Found</h1>
+    <p>Sorry, we couldn’t find that page…</p>
+    <a href="{% url 'home' %}" class="button">Go to Home</a>
+  </div>
+</body>
+</html>
