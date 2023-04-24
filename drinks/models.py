@@ -31,16 +31,16 @@ class RecipeCategory(models.Model):
 class Recipe(models.Model):
     id = models.UUIDField(primary_key=True)
     title = models.CharField(max_length=100)
-    time = models.PositiveIntegerField(null=True)
-    pictureUrl = models.CharField(max_length=500, null=True)
-    videoUrl = models.CharField(max_length=500, null=True)
-    videoImage = models.CharField(max_length=500, null=True)
-    videoTitle = models.CharField(max_length=500, null=True)
+    time = models.PositiveIntegerField(null=True, blank=True)
+    pictureUrl = models.CharField(max_length=500, null=True, blank=True)
+    videoUrl = models.CharField(max_length=500, null=True, blank=True)
+    videoImage = models.CharField(max_length=500, null=True, blank=True)
+    videoTitle = models.CharField(max_length=500, null=True, blank=True)
     isEditorChoice = models.BooleanField(default=False)
-    category = models.ForeignKey(RecipeCategory, on_delete=models.CASCADE, related_name='recipes')
+    category = models.ForeignKey(RecipeCategory, on_delete=models.CASCADE, related_name='recipes', null=True, blank=True)
     orderID = models.PositiveIntegerField()
     dateAdded = models.DateTimeField(default=timezone.now)
-    userID = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipesAdded')
+    userID = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recipesAdded', null=True, blank=True)
 
     def __str__(self):
         return self.title

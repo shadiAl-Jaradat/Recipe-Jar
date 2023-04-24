@@ -32,6 +32,7 @@ urlpatterns = [
     path('getRecipeIngredients/', views.get_recipe_ingredients),
     path('getRecipeSteps/', views.get_recipe_steps),
     path('deleteRecipe/', views.delete_recipe),
+    path('getAllEditorsChoice/', views.get_all_editors_choice_recipes),
     # Shopping List Category
     path('createShoppingListCategory/', views.create_shopping_list_category),
     path('deleteShoppingListCategory/', views.delete_shopping_list_category),

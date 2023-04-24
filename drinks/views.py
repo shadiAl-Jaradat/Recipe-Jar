@@ -359,7 +359,42 @@ def get_all_recipes(request):
 
         return Response(new_list_of_recipes, status=status.HTTP_200_OK)
     else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+        return JsonResponse({'error': 'this API is POST API'}, status=405)
+
+
+@api_view(['GET'])
+def get_all_editors_choice_recipes(request):
+    if request.method == 'GET':
+        editors_choice_recipes = Recipe.objects.annotate(
+            orderIDNEW=Window(
+                expression=RowNumber(),
+                order_by=F('orderID').asc()
+            )
+        ).filter(isEditorChoice=True).order_by('orderID').exclude(orderID__isnull=True).values(
+            'id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
+
+        new_list_of_editors_choice_recipes = []
+        for recipe in editors_choice_recipes:
+            video_data = {
+                'youtubeLink': recipe['videoUrl'],
+                'title': recipe['videoTitle'],
+                'image': recipe['videoImage'],
+            }
+            recipe_data = {
+                'id': recipe['id'],
+                'name': recipe['title'],
+                'time': recipe['time'],
+                'pictureUrl': recipe['pictureUrl'],
+                'videoUrl': video_data,
+                'isEditorChoice': recipe['isEditorChoice'],
+                'orderID': recipe['orderIDNEW']
+            }
+            new_list_of_editors_choice_recipes.append(recipe_data)
+
+        return Response(new_list_of_editors_choice_recipes, status=status.HTTP_200_OK)
+    else:
+        return JsonResponse({'error': 'this API is POST API'}, status=405)
+
 
 
 @api_view(['POST'])
