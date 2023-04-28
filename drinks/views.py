@@ -24,7 +24,9 @@ from django.shortcuts import render
 import pandas as pd
 import requests
 import re
-
+import openai, os
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
 def error_404_view(request, exception):
     return render(request, 'whiskTemplates/404.html', status=404)
@@ -459,6 +461,12 @@ def save_recipe(request):
             ingredients = data['ingredients']
             steps = data['steps']
             user_id = data['userID']
+            add_to_shopping_list = data['addToShoppingList']
+            shopping_list_category_id = data['shoppingListCategoryID']
+
+            if add_to_shopping_list:
+                if not shopping_list_category_id or shopping_list_category_id is None or shopping_list_category_id == "":
+                    return Response({"error": "shoppingListCategoryID is required."}, status=status.HTTP_400_BAD_REQUEST)
 
             # check anf get user object from DB
             if not user_id:
@@ -474,6 +482,8 @@ def save_recipe(request):
                 category = RecipeCategory.objects.get(pk=category_id)
             except:
                 return Response({"error": f"category with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+
 
             # Check if the category exists in the database
             # category = RecipeCategory.objects.get(pk=category_id)
@@ -509,6 +519,22 @@ def save_recipe(request):
                     items_length = Item.objects.count()
                     item = Item(id=items_length + 1, name=item_name)
                     item.save()
+
+                if add_to_shopping_list:
+                    temp_category = ShoppingListCategory.objects.get(pk=shopping_list_category_id)
+                    is_check = False
+                    shopping_list_items = ShoppingListItem.objects.filter(categoryID=temp_category)
+                    order_number = len(shopping_list_items) + 1
+                    shopping_list_item = ShoppingListItem(
+                        id=uuid4(),
+                        itemID=item,
+                        categoryID=temp_category,
+                        isCheck=is_check,
+                        orderNumber=order_number
+                    )
+                    shopping_list_item.save()
+
+
                 if unit_name:
                     try:
                         unit_from_db = Unit.objects.get(name=unit_name)
@@ -624,6 +650,118 @@ def get_recipe_information_web_extension(request):
         return HttpResponseBadRequest("Scraping not supported for this URL")
 
 
+# api_key = os. getenv ("OPENAI_KEY", None)
+
+
+@api_view(['POST'])
+def ocr_get_recipe_info(request):
+    if request.method == 'POST':
+        # Get the text input from the request
+        data = json.loads(request.body)
+        text = data['text']
+
+        # Set up the OpenAI API client
+        openai.api_key = ""
+        model_engine = "text-davinci-002"
+
+        # Call the OpenAI API to extract the recipe
+        try:
+            response = openai.Completion.create(
+                model="gpt-3.5-turbo",
+                prompt=f"Extract the name, ingredients, and steps from this text: {text}\nName:\nIngredients:\nSteps:",
+                max_tokens=1024,
+                n=1,
+                stop=None,
+                temperature=0.5,
+            )
+        except Exception as e:
+            print(f"Error occurred while processing text: {e}")
+            return JsonResponse({'error': f'Error occurred while processing text: {e}.'}, status=405)
+        # Parse the OpenAI API response to extract the recipe name, ingredients, and steps
+        recipe = response.choices[0].text.split("\n")
+        name = recipe[0][6:].strip()
+        ingredients = recipe[1][12:].strip()
+        steps = recipe[2][6:].strip()
+
+        # Return the recipe as a JSON response
+        return JsonResponse({
+            'name': name,
+            'ingredients': ingredients,
+            'steps': steps,
+        }, status=200)
+    else:
+        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+
+
+def generate_recipe(text):
+    openai.api_key = ""
+    prompt = f"""Extract the recipe data in json format like this {{{{"recipeData": {{"name": "string","ingredients": [{{"name": "string","quantity": 1.1,"unit": "string"}}],"steps": [{{"step": "string",}}]}}}}}} from this text: {text}. and set \n between 2 lines"""
+    response = openai.Completion.create(
+        engine="text-davinci-002",
+        prompt=prompt,
+        max_tokens=1024,
+        n=1,
+        stop=None,
+        temperature=0.5,
+    )
+    recipe = response.choices[0].text
+    return recipe
+
+
+@api_view(['POST'])
+def generate_recipe_view(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        text = data['text']
+        user_id = data['userID']
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+        categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
+        serialized_categories = RecipeCategorySerializer(categories, many=True)
+        recipe = generate_recipe(text)
+        # recipe_data = parse_recipe_result(recipe)
+        recipe_result = recipe.split('\n\n')
+        recipe_result = recipe_result[1]
+        recipe_dict = json.loads(recipe_result)
+        recipe_name = recipe_dict['recipeData']['name']
+        ingredients = recipe_dict['recipeData']['ingredients']
+        steps = recipe_dict['recipeData']['steps']
+
+        # Create JSON model
+        recipe_model = {
+            "name": recipe_name,
+            "time": None,
+            "pictureUrl": None,
+            'videoUrl': get_video(recipe_name),
+            "isEditorChoice": False,
+            "ingredients": [],
+            "steps": []
+        }
+        for ingredient in ingredients:
+            ingredient_model = {
+                "name": ingredient["name"],
+                "quantity": ingredient["quantity"],
+                "unit": ingredient["unit"],
+                "orderID": -1
+            }
+            recipe_model["ingredients"].append(ingredient_model)
+
+        for step in steps:
+            recipe_model["steps"].append({
+                "name": step["step"],
+                "orderID": -1
+            })
+
+        final_data = {
+            "recipe": recipe_model,
+            "categories": serialized_categories.data,
+        }
+        return Response(final_data, status=status.HTTP_201_CREATED, )
+    else:
+        return JsonResponse({'error': 'Invalid request method'})
+
 def get_video(query):
     # Set the API key
     api_key = 'AIzaSyCi6S6uY5QpEI8MRZ7z2VJTH69sOI_SMuM'
@@ -647,9 +785,9 @@ def get_video(query):
 
         # Retrieve video information (title, thumbnail, view count) for the matching videos
         video_info = youtube.videos().list(
-            part='snippet,statistics',
+            part='snippet,statistics,contentDetails',
             id=','.join(video_ids),
-            fields='items(id,snippet(title,thumbnails/high/url),statistics(viewCount))'
+            fields='items(id,snippet(channelTitle,title,thumbnails/high/url),statistics(viewCount),contentDetails(duration))'
         ).execute()
 
     except HttpError as error:
@@ -660,6 +798,8 @@ def get_video(query):
     link_of_max_views = ""
     title_of_max_views = ""
     image_of_max_views = ""
+    duration_of_max_views = ""
+    channel_of_max_views = ""
 
     # Loop through the retrieved video information to find the video with the most views
     for video_result in video_info['items']:
@@ -668,6 +808,16 @@ def get_video(query):
         views = video_result['statistics']['viewCount']
         title = video_result['snippet']['title']
         thumbnail_url = video_result['snippet']['thumbnails']['high']['url']
+        duration = video_result['contentDetails']['duration']
+        channel_title = video_result['snippet']['channelTitle']
+
+        # Convert the duration to a more readable format (e.g. "PT5M23S" -> "5:23")
+        duration = re.sub('[^0-9a-zA-Z]+', '', duration)  # remove non-alphanumeric characters
+        duration = duration.lower()
+        duration = duration.replace('pt', '')
+        duration = duration.replace('h', ':').replace('m', ':').replace('s', '')
+        if duration.startswith(':'):
+            duration = duration[1:]
 
         # Update the variables tracking the video with the most views if this video has more views
         if int(views) > int(max_views):
@@ -675,12 +825,16 @@ def get_video(query):
             link_of_max_views = video_url
             title_of_max_views = title
             image_of_max_views = thumbnail_url
+            duration_of_max_views = duration
+            channel_of_max_views = channel_title
 
     # Create a dictionary with the information about the video with the most views
     data = {
         'youtubeLink': link_of_max_views,
         'title': title_of_max_views,
-        'image': image_of_max_views
+        'image': image_of_max_views,
+        'duration': duration_of_max_views,
+        'channelName': channel_of_max_views
     }
 
     # Return the dictionary
