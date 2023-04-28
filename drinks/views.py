@@ -24,9 +24,7 @@ from django.shortcuts import render
 import pandas as pd
 import requests
 import re
-import openai, os
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
+import openai
 
 def error_404_view(request, exception):
     return render(request, 'whiskTemplates/404.html', status=404)
