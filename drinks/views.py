@@ -24,7 +24,7 @@ from django.shortcuts import render
 import pandas as pd
 import requests
 import re
-import openai
+from .secrets import openai
 
 def error_404_view(request, exception):
     return render(request, 'whiskTemplates/404.html', status=404)
@@ -381,7 +381,6 @@ def get_all_editors_choice_recipes(request):
         return JsonResponse({'error': 'this API is POST API'}, status=405)
 
 
-
 @api_view(['POST'])
 def get_recipe_ingredients(request):
     if request.method == 'POST':
@@ -660,52 +659,10 @@ def get_recipe_information_web_extension(request):
         return HttpResponseBadRequest("Scraping not supported for this URL")
 
 
-# api_key = os. getenv ("OPENAI_KEY", None)
-
-
-@api_view(['POST'])
-def ocr_get_recipe_info(request):
-    if request.method == 'POST':
-        # Get the text input from the request
-        data = json.loads(request.body)
-        text = data['text']
-
-        # Set up the OpenAI API client
-        openai.api_key = ""
-        model_engine = "text-davinci-002"
-
-        # Call the OpenAI API to extract the recipe
-        try:
-            response = openai.Completion.create(
-                model="gpt-3.5-turbo",
-                prompt=f"Extract the name, ingredients, and steps from this text: {text}\nName:\nIngredients:\nSteps:",
-                max_tokens=1024,
-                n=1,
-                stop=None,
-                temperature=0.5,
-            )
-        except Exception as e:
-            print(f"Error occurred while processing text: {e}")
-            return JsonResponse({'error': f'Error occurred while processing text: {e}.'}, status=405)
-        # Parse the OpenAI API response to extract the recipe name, ingredients, and steps
-        recipe = response.choices[0].text.split("\n")
-        name = recipe[0][6:].strip()
-        ingredients = recipe[1][12:].strip()
-        steps = recipe[2][6:].strip()
-
-        # Return the recipe as a JSON response
-        return JsonResponse({
-            'name': name,
-            'ingredients': ingredients,
-            'steps': steps,
-        }, status=200)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=405)
-
-
 def generate_recipe(text):
-    openai.api_key = ""
-    prompt = f"""Extract the recipe data in json format like this {{{{"recipeData": {{"name": "string","ingredients": [{{"name": "string","quantity": 1.1,"unit": "string"}}],"steps": [{{"step": "string",}}]}}}}}} from this text: {text}. and set \n between 2 lines"""
+    prompt = f"""Extract the recipe data in json format like this {{{{"recipeData": {{"name": "string", 
+    "time": "int and nullable in minutes " "ingredients": [{{"name": "string","quantity": 1.1,"unit": "string"}}],
+    "steps": [{{"step": "string",}}]}}}}}} from this text: {text}. and set \n between 2 lines"""
     response = openai.Completion.create(
         engine="text-davinci-002",
         prompt=prompt,
@@ -719,7 +676,7 @@ def generate_recipe(text):
 
 
 @api_view(['POST'])
-def generate_recipe_view(request):
+def generate_recipe_ocr(request):
     if request.method == 'POST':
         data = json.loads(request.body)
         text = data['text']
@@ -728,8 +685,10 @@ def generate_recipe_view(request):
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
             return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
         categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
         serialized_categories = RecipeCategorySerializer(categories, many=True)
+
         recipe = generate_recipe(text)
         # recipe_data = parse_recipe_result(recipe)
         recipe_result = recipe.split('\n\n')
@@ -738,13 +697,13 @@ def generate_recipe_view(request):
         recipe_name = recipe_dict['recipeData']['name']
         ingredients = recipe_dict['recipeData']['ingredients']
         steps = recipe_dict['recipeData']['steps']
+        time = recipe_dict['recipeData']['time']
 
         # Create JSON model
         recipe_model = {
             "name": recipe_name,
-            "time": None,
+            "time": time,
             "pictureUrl": None,
-            'videoUrl': get_video(recipe_name),
             "isEditorChoice": False,
             "ingredients": [],
             "steps": []
@@ -752,8 +711,8 @@ def generate_recipe_view(request):
         for ingredient in ingredients:
             ingredient_model = {
                 "name": ingredient["name"],
-                "quantity": ingredient["quantity"],
-                "unit": ingredient["unit"],
+                "quantity": None if ingredient["quantity"] == "" or ingredient["quantity"] == "none" else ingredient["quantity"],
+                "unit": None if ingredient["unit"] == "" else ingredient["unit"],
                 "orderID": -1
             }
             recipe_model["ingredients"].append(ingredient_model)

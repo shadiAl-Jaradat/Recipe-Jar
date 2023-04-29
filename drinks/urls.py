@@ -48,8 +48,7 @@ urlpatterns = [
     # test Api
     path('sendAndGetMyName/<str:name>/', views.send_name, ),
     # ocr
-    path('ocrGetRecipeInfo/', views.ocr_get_recipe_info),
-    path('generateRecipeUsingGPT/', views.generate_recipe_view),
+    path('generateRecipeUsingGPT/', views.generate_recipe_ocr),
 ]
 
 handler404 = 'drinks.views.error_404_view'
