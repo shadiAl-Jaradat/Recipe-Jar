@@ -38,6 +38,7 @@ class Recipe(models.Model):
     videoTitle = models.CharField(max_length=500, null=True, blank=True)
     videoDuration = models.CharField(max_length=500, null=True, blank=True)
     videoChannelName = models.CharField(max_length=500, null=True, blank=True)
+    videoPostedDate = models.CharField(max_length=500, null=True, blank=True)
     isEditorChoice = models.BooleanField(default=False)
     category = models.ForeignKey(RecipeCategory, on_delete=models.CASCADE, related_name='recipes', null=True, blank=True)
     orderID = models.PositiveIntegerField()

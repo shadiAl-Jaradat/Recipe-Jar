@@ -493,6 +493,7 @@ def save_recipe(request):
             video_title = video_data['title']
             video_duration = video_data['duration']
             video_channel_name = video_data['channelName']
+            video_published_date = video_data['videoPostedDate']
 
 
             # Get existing recipes in the same category
@@ -509,6 +510,7 @@ def save_recipe(request):
                             videoTitle=video_title,
                             videoDuration=video_duration,
                             videoChannelName=video_channel_name,
+                            videoPostedDate=video_published_date,
                             isEditorChoice=is_editor_choice,
                             category=category,
                             userID=user,
@@ -770,6 +772,7 @@ def generate_recipe_view(request):
     else:
         return JsonResponse({'error': 'Invalid request method'})
 
+
 def get_video(query):
     # Set the API key
     api_key = 'AIzaSyCi6S6uY5QpEI8MRZ7z2VJTH69sOI_SMuM'
@@ -795,7 +798,7 @@ def get_video(query):
         video_info = youtube.videos().list(
             part='snippet,statistics,contentDetails',
             id=','.join(video_ids),
-            fields='items(id,snippet(channelTitle,title,thumbnails/high/url),statistics(viewCount),contentDetails(duration))'
+            fields='items(id,snippet(channelTitle,title,thumbnails/high/url,publishedAt),statistics(viewCount),contentDetails(duration))'
         ).execute()
 
     except HttpError as error:
@@ -808,6 +811,7 @@ def get_video(query):
     image_of_max_views = ""
     duration_of_max_views = ""
     channel_of_max_views = ""
+    published_date_of_max_views = ""
 
     # Loop through the retrieved video information to find the video with the most views
     for video_result in video_info['items']:
@@ -818,6 +822,7 @@ def get_video(query):
         thumbnail_url = video_result['snippet']['thumbnails']['high']['url']
         duration = video_result['contentDetails']['duration']
         channel_title = video_result['snippet']['channelTitle']
+        published_date = datetime.strptime(video_result['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%S%z').strftime('%b %d, %Y')
 
         # Convert the duration to a more readable format (e.g. "PT5M23S" -> "5:23")
         duration = re.sub('[^0-9a-zA-Z]+', '', duration)  # remove non-alphanumeric characters
@@ -835,6 +840,7 @@ def get_video(query):
             image_of_max_views = thumbnail_url
             duration_of_max_views = duration
             channel_of_max_views = channel_title
+            published_date_of_max_views = published_date
 
     # Create a dictionary with the information about the video with the most views
     data = {
@@ -842,7 +848,8 @@ def get_video(query):
         'title': title_of_max_views,
         'image': image_of_max_views,
         'duration': duration_of_max_views,
-        'channelName': channel_of_max_views
+        'channelName': channel_of_max_views,
+        'videoPostedDate': str(published_date_of_max_views)
     }
 
     # Return the dictionary
