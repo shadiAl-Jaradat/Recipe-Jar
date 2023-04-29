@@ -1,6 +1,7 @@
 import unicodedata
 from datetime import datetime
 import googlemaps
+import openai
 from django.db.models import Window
 from django.db.models import F
 from django.db.models.functions import RowNumber
@@ -24,7 +25,6 @@ from django.shortcuts import render
 import pandas as pd
 import requests
 import re
-from .secrets import openai
 
 def error_404_view(request, exception):
     return render(request, 'whiskTemplates/404.html', status=404)
@@ -660,6 +660,7 @@ def get_recipe_information_web_extension(request):
 
 
 def generate_recipe(text):
+    openai.api_key = ""
     prompt = f"""Extract the recipe data in json format like this {{{{"recipeData": {{"name": "string", 
     "time": "int and nullable in minutes " "ingredients": [{{"name": "string","quantity": 1.1,"unit": "string"}}],
     "steps": [{{"step": "string",}}]}}}}}} from this text: {text}. and set \n between 2 lines"""
