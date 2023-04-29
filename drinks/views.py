@@ -300,20 +300,27 @@ def get_all_recipes(request):
             return Response({"error": "categoryID is required."}, status=status.HTTP_400_BAD_REQUEST)
         try:
             category = RecipeCategory.objects.get(pk=category_id)
-        except User.DoesNotExist:
+        except RecipeCategory.DoesNotExist:
             return Response({"error": f"User with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
-        recipes = Recipe.objects.annotate(
-            orderIDNEW=Window(
-                expression=RowNumber(),
-                order_by=F('orderID').asc()
-            )
-        ).filter(category=category).order_by('orderID').exclude(orderID__isnull=True).values('id', 'videoUrl',
-                                                                                             'videoTitle', 'videoImage',
-                                                                                             'title', 'time',
-                                                                                             'pictureUrl',
-                                                                                             'isEditorChoice',
-                                                                                             'orderIDNEW')
+        try:
+            recipes = Recipe.objects.annotate(
+                orderIDNEW=Window(
+                    expression=RowNumber(),
+                    order_by=F('orderID').asc()
+                )
+            ).filter(category=category).order_by('orderID').exclude(orderID__isnull=True).values('id', 'videoUrl',
+                                                                                                 'videoTitle',
+                                                                                                 'videoImage',
+                                                                                                 'videoDuration',
+                                                                                                 'videoChannelName',
+                                                                                                 'title', 'time',
+                                                                                                 'pictureUrl',
+                                                                                                 'isEditorChoice',
+                                                                                                 'orderIDNEW')
+        except Exception as e:
+            return JsonResponse({'error': f'Error occurred while processing text: {e}.'}, status=405)
+
         new_list_of_recipes = []
 
         for recipe in recipes:
@@ -321,6 +328,8 @@ def get_all_recipes(request):
                 'youtubeLink': recipe['videoUrl'],
                 'title': recipe['videoTitle'],
                 'image': recipe['videoImage'],
+                'duration': recipe['videoDuration'],
+                'channelName': recipe['videoChannelName']
             }
             recipe_data = {
                 'id': recipe['id'],
@@ -448,13 +457,10 @@ def save_recipe(request):
         try:
             # Parse the request body
             data = json.loads(request.body)
-            category_id = UUID(data['categoryID'])
+            category_id = UUID(data['recipeCategoryID'])
             recipe_name = data['name']
             time = data['time']
             picture_url = data['pictureUrl']
-            video_url = data['videoUrl']['youtubeLink']
-            video_image = data['videoUrl']['image']
-            video_title = data['videoUrl']['title']
             is_editor_choice = data['isEditorChoice']
             ingredients = data['ingredients']
             steps = data['steps']
@@ -481,10 +487,13 @@ def save_recipe(request):
             except:
                 return Response({"error": f"category with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
+            video_data = get_video(recipe_name)
+            video_url = video_data['youtubeLink']
+            video_image = video_data['image']
+            video_title = video_data['title']
+            video_duration = video_data['duration']
+            video_channel_name = video_data['channelName']
 
-
-            # Check if the category exists in the database
-            # category = RecipeCategory.objects.get(pk=category_id)
 
             # Get existing recipes in the same category
             existing_recipes = Recipe.objects.filter(category=category)
@@ -498,6 +507,8 @@ def save_recipe(request):
                             videoUrl=video_url,
                             videoImage=video_image,
                             videoTitle=video_title,
+                            videoDuration=video_duration,
+                            videoChannelName=video_channel_name,
                             isEditorChoice=is_editor_choice,
                             category=category,
                             userID=user,
@@ -633,7 +644,6 @@ def get_recipe_information_web_extension(request):
             'name': scraper.title(),
             'time': time,
             'pictureUrl': scraper.image(),
-            'videoUrl': get_video(scraper.title()),
             'isEditorChoice': False,
             'ingredients': ingredients,
             'steps': steps
