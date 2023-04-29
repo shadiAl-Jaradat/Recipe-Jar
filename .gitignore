@@ -2,4 +2,3 @@ drinks/__pycache__/
 drinks/migrations/
 error.log
 output.log
-secrets.py
