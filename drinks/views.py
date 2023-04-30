@@ -565,7 +565,7 @@ def save_recipe(request):
 
             # Loop over the steps and create their related models
             for step in steps:
-                description = step['name']
+                description = step['description']
                 order_id = step['orderID']
 
                 # Create the step instance
