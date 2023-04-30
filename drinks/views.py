@@ -25,6 +25,8 @@ from django.shortcuts import render
 import pandas as pd
 import requests
 import re
+from .secrets import openai
+
 
 def error_404_view(request, exception):
     return render(request, 'whiskTemplates/404.html', status=404)
@@ -660,7 +662,6 @@ def get_recipe_information_web_extension(request):
 
 
 def generate_recipe(text):
-    openai.api_key = ""
     prompt = f"""Extract the recipe data in json format like this {{{{"recipeData": {{"name": "string", 
     "time": "int and nullable in minutes " "ingredients": [{{"name": "string","quantity": 1.1,"unit": "string"}}],
     "steps": [{{"step": "string",}}]}}}}}} from this text: {text}. and set \n between 2 lines"""
@@ -691,7 +692,6 @@ def generate_recipe_ocr(request):
         serialized_categories = RecipeCategorySerializer(categories, many=True)
 
         recipe = generate_recipe(text)
-        # recipe_data = parse_recipe_result(recipe)
         recipe_result = recipe.split('\n\n')
         recipe_result = recipe_result[1]
         recipe_dict = json.loads(recipe_result)
@@ -720,7 +720,7 @@ def generate_recipe_ocr(request):
 
         for step in steps:
             recipe_model["steps"].append({
-                "name": step["step"],
+                "description": step["step"],
                 "orderID": -1
             })
 
