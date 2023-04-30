@@ -1,7 +1,6 @@
 import unicodedata
 from datetime import datetime
 import googlemaps
-import openai
 from django.db.models import Window
 from django.db.models import F
 from django.db.models.functions import RowNumber
@@ -665,14 +664,17 @@ def generate_recipe(text):
     prompt = f"""Extract the recipe data in json format like this {{{{"recipeData": {{"name": "string", 
     "time": "int and nullable in minutes " "ingredients": [{{"name": "string","quantity": 1.1,"unit": "string"}}],
     "steps": [{{"step": "string",}}]}}}}}} from this text: {text}. and set \n between 2 lines"""
-    response = openai.Completion.create(
-        engine="text-davinci-002",
-        prompt=prompt,
-        max_tokens=1024,
-        n=1,
-        stop=None,
-        temperature=0.5,
-    )
+    try:
+        response = openai.Completion.create(
+            engine="text-davinci-002",
+            prompt=prompt,
+            max_tokens=1024,
+            n=1,
+            stop=None,
+            temperature=0.5,
+        )
+    except Exception as e:
+        print(f'error : {e}')
     recipe = response.choices[0].text
     return recipe
 
