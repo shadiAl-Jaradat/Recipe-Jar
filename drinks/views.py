@@ -631,7 +631,7 @@ def get_recipe_information_web_extension(request):
         for step in scraper.instructions_list():
             steps.append(
                 {
-                    'name': step,
+                    'description': step,
                     'orderID': -1
                 }
             )
