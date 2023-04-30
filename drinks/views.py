@@ -136,10 +136,14 @@ def get_item_from_excel(request):
     return JsonResponse({'error': 'Invalid request method'})
 
 
+# User Functionality APIs ################################
+
 @api_view(['POST'])
 def create_user(request):
     if request.method == 'POST':
+        # load the request body data as a JSON object.
         data = json.loads(request.body)
+        # create a new User object using the data from the request.
         user = User(
             id=data['userID'],
             firstName=data['firstName'],
@@ -149,7 +153,9 @@ def create_user(request):
             weight=data['weight'],
             height=data['height'],
         )
+        # save the new User object to the database.
         user.save()
+        # serialize the User object and return it as a JSON response.
         serialized_user = UserSerializer(user)
         return JsonResponse(serialized_user.data, status=status.HTTP_200_OK)
 
@@ -157,125 +163,170 @@ def create_user(request):
 @api_view(['POST'])
 def get_user_data(request):
     if request.method == 'POST':
+        # Get the user ID from the request data.
         user_id = request.data.get('userID')
+        # Check if the user ID is present in the request data.
         if not user_id:
             return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        # Try to fetch the user data from the database using the user ID.
         try:
             user = User.objects.get(pk=user_id)
         except:
+            # If user is not found in database then return a 404 response.
             return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
+        # Serialize the User object and return it as a JSON response.
         serialized_user = UserSerializer(user)
         return JsonResponse(serialized_user.data, status=status.HTTP_200_OK)
     else:
+        # Return a bad request response if the request method is not POST.
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 def update_user_data(request):
     if request.method == 'POST':
+        # Get the user ID from the request data
         user_id = request.data.get('id')
-
+        # Try to fetch the user data from the database using the user ID.
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
+            # If user is not found in database then return a 404 response.
             return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
+        # Update the User object using the request data and serialize it.
         serializer = UserSerializer(user, data=request.data)
         if serializer.is_valid():
             serializer.save()
+            # If the request data is invalid, return a 400 Bad Request response with the validation errors.
             return Response(serializer.data, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     else:
+        # Return a bad request response if the request method is not POST.
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
+
+# Recipe Category APIs ################################
 
 @api_view(['POST'])
 def create_recipe_category(request):
     if request.method == 'POST':
+        # Parse request data
         data = json.loads(request.body)
-
-        # reformat the data
+        # generate unique ID for the new category.
         category_uuid = uuid4()
+
+        # Get category name, user ID, and order ID.
         name = data['name']
         user_id = data['userID']
         temp_user = User.objects.get(pk=user_id)
         categories = RecipeCategory.objects.filter(user=temp_user).order_by('orderID')
         order_id = len(categories) + 1
 
+        # Create new RecipeCategory object and save it to the database.
         temp_category = RecipeCategory(
             id=category_uuid,
             name=name,
             orderID=order_id,
             user=temp_user
         )
-
         temp_category.save()
+
+        # Serialize the new RecipeCategory object and return it as a JSON response with a 200 status code.
         serialized_category = RecipeCategorySerializer(temp_category)
+
         return JsonResponse(serialized_category.data, status=status.HTTP_200_OK)
     else:
+        # Return a bad request response if the request method is not POST.
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 def rename_recipe_category(request):
     if request.method == 'POST':
+        # Retrieve the category_id and new_name from the request data
         category_id = request.data.get('id')
         new_name = request.data.get('newName')
+
+        # Try to get the RecipeCategory object with the specified category_id
+        # If it doesn't exist, return 404 status with an error message
         category = get_object_or_404(RecipeCategory, id=category_id)
+
+        # Update the category name with the new name
         category.name = new_name
+
+        # Save the changes to the category object
         category.save()
+
+        # Serialize the updated category object
         serializer = RecipeCategorySerializer(category)
+
+        # Return a JSON response with the serialized category data and a status of 200 OK
         return Response(serializer.data, status=status.HTTP_200_OK)
     else:
+        # Return a JSON response with an error message and a status of 400 BAD REQUEST if request method is not POST
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 def delete_recipe_category(request):
     if request.method == 'POST':
+        # Extract the category id from the request body using the get() method
         category_id = request.data.get('id')
+
+        # Use get_object_or_404 to get the category object with the given id or
+        # return a 404 response if it does not exist
         category = get_object_or_404(RecipeCategory, id=category_id)
+
+        # Call the delete method on the category object to remove it from the database
         category.delete()
+
+        # Return a 204 status code to indicate that the category has been successfully deleted,
+        # along with a message indicating that the category has been deleted
         return Response({'message': ' Recipe Category deleted :( '}, status=status.HTTP_204_NO_CONTENT)
     else:
-        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['POST'])
-def delete_recipe(request):
-    if request.method == 'POST':
-        recipe_id = request.data.get('id')
-        recipe = get_object_or_404(Recipe, id=recipe_id)
-        recipe.delete()
-        return Response({'message': ' Recipe deleted :( '}, status=status.HTTP_204_NO_CONTENT)
-    else:
+        # If the request method is not POST, return a 400 status code with an error message
+        # indicating that the API only accepts POST requests
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 def get_all_recipe_categories(request):
     if request.method == 'POST':
+        # retrieve the user ID from the request data
         user_id = request.data.get('userID')
+
+        # check if the user ID is present in the request data
         if not user_id:
             return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
         try:
+            # Get the user object from the database based on the user ID
             user = User.objects.get(pk=user_id)
         except:
+            # If the user does not exist, return a 404 Not Found response
             return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
+        # retrieve all the recipe categories for the user and annotate them with a new column "orderIDNEW"
         categories = RecipeCategory.objects.annotate(
             orderIDNEW=Window(
                 expression=RowNumber(),
                 order_by=F('orderID').asc()
             )
         ).filter(user=user_id).order_by('orderID')
+
+        # exclude any categories with a null orderID value and retrieve only the id, name, and orderIDNEW fields
         categories = categories.exclude(orderID__isnull=True).values('id', 'name', 'orderIDNEW')
 
+        # create a list to store the data for each category and its associated recipes
         list_data = []
+
         for category in categories:
+            # retrieve all the recipes associated with the category
             recipes_of_this_category = Recipe.objects.filter(category=category['id'])
+
+            # append the category data along with the number of recipes associated with it to the list
             list_data.append(
                 {
                     'id': category['id'],
@@ -285,25 +336,56 @@ def get_all_recipe_categories(request):
                 }
             )
 
-        data = list(categories.values())
-        # qs_json = serializers.Serializer(categories)
+        # return the list of category data with a 200 OK response status
         return Response(list_data, status=status.HTTP_200_OK)
     else:
+        # Return a 400 Bad Request response if the request method is not POST
+        JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+# Recipe APIs ################################
+
+@api_view(['POST'])
+def delete_recipe(request):
+    if request.method == 'POST':
+        # extract the recipe id from the request data
+        recipe_id = request.data.get('id')
+
+        # fetch the recipe object from the database, or raise a 404 error if it doesn't exist
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+
+        # delete the recipe object from the database
+        recipe.delete()
+
+        # return a success message with a 204 status code
+        return Response({'message': ' Recipe deleted :( '}, status=status.HTTP_204_NO_CONTENT)
+    else:
+        # return an error message if the request method is not POST
         JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
 def get_all_recipes(request):
     if request.method == 'POST':
+        # loads the request body as JSON and extracts the categoryID field.
         data = json.loads(request.body)
         category_id = UUID(data['categoryID'])
+
+        # checks if categoryID is present in the request, and if not, returns a bad request error response.
         if not category_id:
             return Response({"error": "categoryID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # retrieve the RecipeCategory object with the specified ID,
+        # and returns a not found error response if it doesn't exist.
         try:
             category = RecipeCategory.objects.get(pk=category_id)
         except RecipeCategory.DoesNotExist:
             return Response({"error": f"User with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
+        # retrieves all Recipe objects associated with the specified category,
+        # and annotates them with a new orderIDNEW field using the Window and RowNumber functions
+        # from Django's Window expressions. It also excludes any recipes that have a null orderID. If an error occurs,
+        # it returns a JSON response with a description of the error.
         try:
             recipes = Recipe.objects.annotate(
                 orderIDNEW=Window(
@@ -322,6 +404,8 @@ def get_all_recipes(request):
         except Exception as e:
             return JsonResponse({'error': f'Error occurred while processing text: {e}.'}, status=405)
 
+        # creates a list of new recipe objects that have the videoData and recipeData
+        # extracted from the original query results.
         new_list_of_recipes = []
 
         for recipe in recipes:
@@ -343,14 +427,112 @@ def get_all_recipes(request):
             }
             new_list_of_recipes.append(recipe_data)
 
+        # returns the new list of recipes as a JSON response with a status of 200 OK
         return Response(new_list_of_recipes, status=status.HTTP_200_OK)
     else:
+        # return an error message if the request method is not POST
         return JsonResponse({'error': 'this API is POST API'}, status=405)
 
+
+@api_view(['POST'])
+def get_recipe_ingredients(request):
+    if request.method == 'POST':
+        # load data from the request body
+        data = json.loads(request.body)
+
+        # retrieve the recipe ID from the data
+        recipe_id = UUID(data['RecipeID'])
+
+        # get the recipe object with the given ID
+        recipe = Recipe.objects.get(pk=recipe_id)
+
+        # retrieve all the ingredients for the recipe
+        ingredients = Ingredient.objects.filter(recipe=recipe)
+
+        # serialize the ingredients using the IngredientSerializer
+        serialized_ingredients = IngredientSerializer(ingredients, many=True)
+
+        # create a list of ingredients with additional data
+        list_ingredients = []
+        for ingredient in serialized_ingredients.data:
+
+            # get the item object for the ingredient
+            item_id = ingredient['itemID']
+            item_from_db = Item.objects.get(id=item_id)
+
+            # get the quantity and unit for the ingredient
+            quantity = ingredient['quantity']
+            unit_name = ""
+            if ingredient['unitID']:
+                unit_id = ingredient['unitID']
+                unit_from_db = Unit.objects.get(id=unit_id)
+                unit_name = unit_from_db.name
+            else:
+                unit_name = None
+
+            # get the order number for the ingredient
+            order_id = ingredient['orderNumber']
+
+            # add the ingredient with all the data to the list of ingredients
+            list_ingredients.append(
+                {
+                    'name': item_from_db.name,
+                    'quantity': quantity,
+                    'unit': unit_name,
+                    'orderNumber': order_id
+                }
+            )
+
+        # return the list of ingredients
+        return Response(list_ingredients, status=status.HTTP_200_OK)
+    else:
+        # return an error response if the request method is not POST
+        return JsonResponse({'error': 'this API is POST API'}, status=405)
+
+
+@api_view(['POST'])
+def get_recipe_steps(request):
+    if request.method == 'POST':
+
+        # load request body data into JSON object
+        data = json.loads(request.body)
+
+        # retrieve recipe ID from data and convert to UUID object
+        recipe_id = UUID(data['RecipeID'])
+
+        # query Recipe object with given ID and retrieve recipe object
+        recipe = Recipe.objects.get(pk=recipe_id)
+
+        # query Step objects related to recipe and serialize with StepSerializer
+        steps = Step.objects.filter(recipe=recipe)
+        serialized_steps = StepSerializer(steps, many=True)
+
+        # create list of dictionaries containing step descriptions and order IDs
+        list_steps = []
+        for step in serialized_steps.data:
+            step_description = step['description']
+            step_order_id = step['orderID']
+            list_steps.append(
+                {
+                    'description': step_description,
+                    'orderID': step_order_id,
+                }
+            )
+
+        # return list of steps as response with 200 OK status
+        return Response(list_steps, status=status.HTTP_200_OK)
+    else:
+        # return error response if request method is not POST
+        return JsonResponse({'error': 'this API is POST API'}, status=405)
+
+
+# Home Screen APIs ################################
 
 @api_view(['GET'])
 def get_all_editors_choice_recipes(request):
     if request.method == 'GET':
+        # retrieve all editor's choice recipes from the Recipe model in the database
+        # annotate each recipe with a new field orderIDNEW that represents its row number
         editors_choice_recipes = Recipe.objects.annotate(
             orderIDNEW=Window(
                 expression=RowNumber(),
@@ -360,7 +542,191 @@ def get_all_editors_choice_recipes(request):
             'id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
 
         new_list_of_editors_choice_recipes = []
+
         for recipe in editors_choice_recipes:
+            # create a new dictionary for video data
+            video_data = {
+                'youtubeLink': recipe['videoUrl'],
+                'title': recipe['videoTitle'],
+                'channelName': recipe['videoChannelName'],
+                'image': recipe['videoImage'],
+                'duration': recipe['videoDuration']
+            }
+
+            # create a new dictionary for the recipe data
+            recipe_data = {
+                'id': recipe['id'],
+                'name': recipe['title'],
+                'time': recipe['time'],
+                'pictureUrl': recipe['pictureUrl'],
+                'videoUrl': video_data,
+                'isEditorChoice': recipe['isEditorChoice'],
+                'orderID': recipe['orderIDNEW']
+            }
+
+            # Add the new recipe data to the list
+            new_list_of_editors_choice_recipes.append(recipe_data)
+
+        # Return the list of new recipe data as a response with HTTP status code 200
+        return Response(new_list_of_editors_choice_recipes, status=status.HTTP_200_OK)
+    else:
+        # If the request method is not GET, return an error response with HTTP status code 405
+        return JsonResponse({'error': 'this API is POST API'}, status=405)
+
+
+@api_view(['POST'])
+def select_shopping_list_in_home_screen(request):
+    if request.method == 'POST':
+        # extract the data from the request body
+        data = json.loads(request.body)
+        category_id = data['categoryID']
+        user_id = data['userID']
+
+        # check if categoryID is provided
+        if not category_id:
+            return Response({"error": "categoryID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # get the ShoppingListCategory object using the categoryID
+        try:
+            shopping_list_category = ShoppingListCategory.objects.get(pk=category_id)
+        except ShoppingListCategory.DoesNotExist:
+            return Response({"error": f"Category with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        # check if userID is provided
+        if not user_id:
+            return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # get the User object using the userID
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        # get the shopping list name and id
+        shopping_list_name = shopping_list_category.name
+        shopping_list_id = shopping_list_category.id
+
+        # update the user's selected shopping list to the categoryID and save
+        user.selectedShoppingList = str(category_id)
+        user.save()
+
+        # get the shopping list items for the given shopping list category
+        list_items = ShoppingListItem.objects.annotate(
+            orderNumberNEW=Window(
+                expression=RowNumber(),
+                order_by=F('orderNumber').asc()
+            )
+        ).filter(categoryID=shopping_list_category).order_by('orderNumber')
+
+        # exclude items that do not have an orderNumber and get the item ID,
+        # check status, and order number for each item
+        list_items = list_items.exclude(orderNumber__isnull=True).values('id', 'itemID', 'isCheck', 'orderNumberNEW')
+
+        new_list_of_items = []
+
+        # loop through the list_items and get the name of the item from the Item table
+        for shopping_list_item in list_items:
+            item_id = shopping_list_item['itemID']
+            item_from_db = Item.objects.get(id=item_id)
+
+            # append the item information to the new list of items
+            new_list_of_items.append(
+                {
+                    'id': shopping_list_item['id'],
+                    'name': item_from_db.name,
+                    'isCheck': shopping_list_item['isCheck'],
+                    'orderID': shopping_list_item['orderNumberNEW']
+                }
+            )
+
+            # stop the loop at the fourth item
+            if shopping_list_item['orderNumberNEW'] == 4:
+                break
+
+        # create the shopping list category data object
+        category_data = {
+            "shoppingListCategoryID": str(shopping_list_id),
+            "shoppingListCategoryName": shopping_list_name,
+            "listOfItems": new_list_of_items,
+        }
+
+        # return the shopping list category data as a JSON response with a success status
+        return JsonResponse(category_data, status=status.HTTP_200_OK)
+    else:
+        # if the request method is not POST, return a message indicating that this is a POST API with an error status
+        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+def get_home_screen_data(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user_id = data['userID']
+
+        # check if user id sent
+        if not user_id:
+            return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+
+        # get the id of selected shopping list of user
+        selected_shopping_list_id = user.selectedShoppingList
+
+        # check if selected_shopping_list_id if its null or empty
+        if selected_shopping_list_id is None or selected_shopping_list_id == "":
+            returned_shopping_list = None
+            print("no selected shopping list ")
+        try:
+            shopping_list_category = ShoppingListCategory.objects.get(pk=selected_shopping_list_id)
+
+            # get 4 items of shopping list
+            shopping_list_items = ShoppingListItem.objects.annotate(
+                orderNumberNEW=Window(
+                    expression=RowNumber(),
+                    order_by=F('orderNumber').asc()
+                )
+            ).filter(categoryID=shopping_list_category).order_by('orderNumber')
+            shopping_list_items = shopping_list_items.exclude(orderNumber__isnull=True).values('id', 'itemID',
+                                                                                               'isCheck',
+                                                                                               'orderNumberNEW')
+
+            new_list_of_items = []
+            for shopping_list_item in shopping_list_items:
+                # get name of Item using ItemID
+                item_id = shopping_list_item['itemID']
+                item_from_db = Item.objects.get(id=item_id)
+                new_list_of_items.append(
+                    {
+                        'id': shopping_list_item['id'],
+                        'name': item_from_db.name,
+                        'isCheck': shopping_list_item['isCheck'],
+                        'orderID': shopping_list_item['orderNumberNEW']
+                    }
+                )
+                if shopping_list_item['orderNumberNEW'] == 4:
+                    break
+
+            returned_shopping_list = {
+                "ShoppingListName": shopping_list_category.name,
+                "items": new_list_of_items
+            }
+        except ShoppingListCategory.DoesNotExist:
+            print("selected shopping list is deleted")
+            returned_shopping_list = None
+
+        # retrieve the four newest recipes for the user and sort them by the date they were added
+        recently_added_recipes = Recipe.objects.annotate(
+            orderIDNEW=Window(
+                expression=RowNumber(),
+            )
+        ).filter(userID=user_id).order_by('-dateAdded').exclude(orderID__isnull=True)[:4].values(
+            'id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
+
+        returned_recently_recipe_added = []
+        order = 1
+        for recipe in recently_added_recipes:
             video_data = {
                 'youtubeLink': recipe['videoUrl'],
                 'title': recipe['videoTitle'],
@@ -373,82 +739,22 @@ def get_all_editors_choice_recipes(request):
                 'pictureUrl': recipe['pictureUrl'],
                 'videoUrl': video_data,
                 'isEditorChoice': recipe['isEditorChoice'],
-                'orderID': recipe['orderIDNEW']
+                'orderID': order
             }
-            new_list_of_editors_choice_recipes.append(recipe_data)
+            returned_recently_recipe_added.append(recipe_data)
+            order += 1
 
-        return Response(new_list_of_editors_choice_recipes, status=status.HTTP_200_OK)
+        returned_data = {
+            "recentlyAdded": returned_recently_recipe_added,
+            "selectedShoppingList": returned_shopping_list
+        }
+
+        return Response(returned_data, status=status.HTTP_200_OK)
     else:
-        return JsonResponse({'error': 'this API is POST API'}, status=405)
+        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
-@api_view(['POST'])
-def get_recipe_ingredients(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        recipe_id = UUID(data['RecipeID'])
-        recipe = Recipe.objects.get(pk=recipe_id)
-
-        ingredients = Ingredient.objects.filter(recipe=recipe)
-        serialized_ingredients = IngredientSerializer(ingredients, many=True)
-
-        list_ingredients = []
-        for ingredient in serialized_ingredients.data:
-
-            item_id = ingredient['itemID']
-            item_from_db = Item.objects.get(id=item_id)
-
-            quantity = ingredient['quantity']
-
-            unit_name = ""
-            if ingredient['unitID']:
-                unit_id = ingredient['unitID']
-                unit_from_db = Unit.objects.get(id=unit_id)
-                unit_name = unit_from_db.name
-            else:
-                unit_name = None
-
-            order_id = ingredient['orderNumber']
-
-            list_ingredients.append(
-                {
-                    'name': item_from_db.name,
-                    'quantity': quantity,
-                    'unit': unit_name,
-                    'orderNumber': order_id
-                }
-            )
-
-        return Response(list_ingredients, status=status.HTTP_200_OK)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=405)
-
-
-@api_view(['POST'])
-def get_recipe_steps(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        recipe_id = UUID(data['RecipeID'])
-        recipe = Recipe.objects.get(pk=recipe_id)
-
-        steps = Step.objects.filter(recipe=recipe)
-        serialized_steps = StepSerializer(steps, many=True)
-
-        list_steps = []
-        for step in serialized_steps.data:
-            step_description = step['description']
-            step_order_id = step['orderID']
-            list_steps.append(
-                {
-                    'description': step_description,
-                    'orderID': step_order_id,
-                }
-            )
-
-        return Response(list_steps, status=status.HTTP_200_OK)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=405)
-
+# WebExtension APIs ################################
 
 @api_view(['POST'])
 def save_recipe(request):
@@ -494,7 +800,6 @@ def save_recipe(request):
             video_duration = video_data['duration']
             video_channel_name = video_data['channelName']
             video_published_date = video_data['videoPostedDate']
-
 
             # Get existing recipes in the same category
             existing_recipes = Recipe.objects.filter(category=category)
@@ -580,103 +885,208 @@ def save_recipe(request):
             return JsonResponse({'error': ValueError}, status=400)
 
     # Return an error response if the request method is not POST
-    return JsonResponse({'error': 'Invalid request method.'}, status=405)
+    return JsonResponse({'error': 'this API is POST API'}, status=405)
+
+
+# this api used in save_recipe api to get the video from you-tube that have max number of views
+def get_video(query):
+    # set the API key
+    api_key = 'AIzaSyCi6S6uY5QpEI8MRZ7z2VJTH69sOI_SMuM'
+
+    # build the YouTube API client
+    youtube = build('youtube', 'v3', developerKey=api_key)
+
+    try:
+        # search for videos matching the query, sorted by view count in descending order
+        search_response = youtube.search().list(
+            q=query + ' recipe',
+            type='video',
+            part='id',
+            maxResults=30,
+            order='viewCount',
+            fields='items(id(videoId))'
+        ).execute()
+
+        # extract the video IDs from the search results
+        video_ids = [search_result['id']['videoId'] for search_result in search_response['items']]
+
+        # retrieve video information (title, thumbnail, view count) for the matching videos
+        video_info = youtube.videos().list(
+            part='snippet,statistics,contentDetails',
+            id=','.join(video_ids),
+            fields='items(id,snippet(channelTitle,title,thumbnails/high/url,publishedAt),statistics(viewCount),contentDetails(duration))'
+        ).execute()
+
+    except HttpError as error:
+        print('An error occurred: %s' % error)
+
+    # initialize variables for tracking the video with the most views
+    max_views = 0
+    link_of_max_views = ""
+    title_of_max_views = ""
+    image_of_max_views = ""
+    duration_of_max_views = ""
+    channel_of_max_views = ""
+    published_date_of_max_views = ""
+
+    # loop through the retrieved video information to find the video with the most views
+    for video_result in video_info['items']:
+        video_id = video_result['id']
+        video_url = f'https://www.youtube.com/watch?v={video_id}'
+        views = video_result['statistics']['viewCount']
+        title = video_result['snippet']['title']
+        thumbnail_url = video_result['snippet']['thumbnails']['high']['url']
+        duration = video_result['contentDetails']['duration']
+        channel_title = video_result['snippet']['channelTitle']
+        published_date = datetime.strptime(video_result['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%S%z').strftime('%b %d, %Y')
+
+        # convert the duration to a more readable format (e.g. "PT5M23S" -> "5:23")
+        duration = re.sub('[^0-9a-zA-Z]+', '', duration)  # remove non-alphanumeric characters
+        duration = duration.lower()
+        duration = duration.replace('pt', '')
+        duration = duration.replace('h', ':').replace('m', ':').replace('s', '')
+        if duration.startswith(':'):
+            duration = duration[1:]
+
+        # update the variables tracking the video with the most views if this video has more views
+        if int(views) > int(max_views):
+            max_views = views
+            link_of_max_views = video_url
+            title_of_max_views = title
+            image_of_max_views = thumbnail_url
+            duration_of_max_views = duration
+            channel_of_max_views = channel_title
+            published_date_of_max_views = published_date
+
+    # create a dictionary with the information about the video with the most views
+    data = {
+        'youtubeLink': link_of_max_views,
+        'title': title_of_max_views,
+        'image': image_of_max_views,
+        'duration': duration_of_max_views,
+        'channelName': channel_of_max_views,
+        'videoPostedDate': str(published_date_of_max_views)
+    }
+
+    # return the dictionary
+    return data
 
 
 @api_view(['POST'])
 def get_recipe_information_web_extension(request):
-    try:
-        data = json.loads(request.body)
-        website_url = data['websiteUrl']
-        user_id = data['userID']
+    if request.method == 'POST':
         try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
-        categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
-        serializer = RecipeCategorySerializer(categories, many=True)
+            # extracts website URL and user ID from the request body and loads it as JSON
+            data = json.loads(request.body)
+            website_url = data['websiteUrl']
+            user_id = data['userID']
 
-        scraper = scrape_me(website_url)
+            try:
+                # attempts to get the user with the given ID from the database
+                user = User.objects.get(pk=user_id)
+            except User.DoesNotExist:
+                return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
 
-        ingredients = []
+            # fetches recipe categories for the given user and orders them by orderID
+            categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
 
-        steps = []
+            # serializes the categories data
+            serializer = RecipeCategorySerializer(categories, many=True)
 
-        for ingredient in scraper.ingredients():
-            quants = parser.parse(ingredient)
-            if quants.__len__() == 0:
-                quantity = None
-                unit = None
-            else:
-                quantity = quants[0].value
-                unit = quants[0].unit.name
+            # scrapes the website for recipe information
+            scraper = scrape_me(website_url)
 
-            if unit == 'dimensionless':
-                unit = None
+            ingredients = []
+            steps = []
 
-            ingredient_parce_name = parse(convert_fraction(ingredient))
-            if ',' in ingredient_parce_name['name']:
-                ingredient_parce_name = ingredient_parce_name['name'].split(',')[0]
-            else:
-                ingredient_parce_name = ingredient_parce_name['name']
+            # extracts ingredients from the scraped recipe and formats them as a list
+            for ingredient in scraper.ingredients():
 
-            ingredients.append(
-                {
-                    'name': ingredient_parce_name,
-                    'quantity': quantity,
-                    'unit': unit,
-                    'orderID': -1
-                }
-            )
+                # parses the quantity and unit of the ingredient using a natural language processing library
+                quants = parser.parse(ingredient)
+                if quants.__len__() == 0:
+                    quantity = None
+                    unit = None
+                else:
+                    quantity = quants[0].value
+                    unit = quants[0].unit.name
 
-        for step in scraper.instructions_list():
-            steps.append(
-                {
-                    'description': step,
-                    'orderID': -1
-                }
-            )
+                if unit == 'dimensionless':
+                    unit = None
 
-        try:
-            time = scraper.cook_time()
+                # normalizes the ingredient name by converting fractions to decimal values
+                ingredient_parce_name = parse(convert_fraction(ingredient))
+                if ',' in ingredient_parce_name['name']:
+                    ingredient_parce_name = ingredient_parce_name['name'].split(',')[0]
+                else:
+                    ingredient_parce_name = ingredient_parce_name['name']
+
+                # adds the formatted ingredient to the list
+                ingredients.append(
+                    {
+                        'name': ingredient_parce_name,
+                        'quantity': quantity,
+                        'unit': unit,
+                        'orderID': -1
+                    }
+                )
+
+            # extracts recipe steps from the scraped recipe and formats them as a list
+            for step in scraper.instructions_list():
+                steps.append(
+                    {
+                        'description': step,
+                        'orderID': -1
+                    }
+                )
+
+            try:
+                # attempts to extract the cook time from the scraped recipe
+                time = scraper.cook_time()
+            except:
+                # sets cook time to None if it couldn't be extracted
+                time = None
+
+            # Formats the scraped recipe data into a dictionary
+            recipe_data = {
+                'name': scraper.title(),
+                'time': time,
+                'pictureUrl': scraper.image(),
+                'isEditorChoice': False,
+                'ingredients': ingredients,
+                'steps': steps
+            }
+
+            # Combines the recipe data and category data into a single dictionary
+            all_data = {
+                'recipe': recipe_data,
+                "categories": serializer.data
+            }
+            # Returns the combined data as a JSON response with a 201 status code
+            return Response(all_data, status=status.HTTP_201_CREATED, )
         except:
-            time = None
-
-        recipe_data = {
-            'name': scraper.title(),
-            'time': time,
-            'pictureUrl': scraper.image(),
-            'isEditorChoice': False,
-            'ingredients': ingredients,
-            'steps': steps
-        }
-
-        all_data = {
-            'recipe': recipe_data,
-            "categories": serializer.data
-        }
-        return Response(all_data, status=status.HTTP_201_CREATED, )
-    except:
-        return HttpResponseBadRequest("Scraping not supported for this URL")
+            # Returns a bad request response if the scraping failed
+            return HttpResponseBadRequest("Scraping not supported for this URL")
+    else:
+        # Return an error response if the request method is not POST
+        return JsonResponse({'error': 'this API is POST API'}, status=405)
 
 
-def generate_recipe(text):
-    prompt = f"""Extract the recipe data in json format like this {{{{"recipeData": {{"name": "string", 
-    "time": "int and nullable in minutes " "ingredients": [{{"name": "string","quantity": 1.1,"unit": "string"}}],
-    "steps": [{{"step": "string",}}]}}}}}} from this text: {text}. and set \n between 2 lines"""
-    try:
-        response = openai.Completion.create(
-            engine="text-davinci-002",
-            prompt=prompt,
-            max_tokens=1024,
-            n=1,
-            stop=None,
-            temperature=0.5,
-        )
-    except Exception as e:
-        print(f'error : {e}')
-    recipe = response.choices[0].text
-    return recipe
+# this api used to convert the fractions in ingredients of recipe
+def convert_fraction(string):
+    if '½' in string:
+        fraction = unicodedata.numeric('½')
+        string = string.replace('½', str(fraction))
+    elif '¼' in string:
+        fraction = unicodedata.numeric('¼')
+        string = string.replace('¼', str(fraction))
+    elif '¾' in string:
+        fraction = unicodedata.numeric('¾')
+        string = string.replace('¾', str(fraction))
+    return string
+
+
+# WebExtension APIs ################################
 
 
 @api_view(['POST'])
@@ -735,101 +1145,26 @@ def generate_recipe_ocr(request):
         return JsonResponse({'error': 'Invalid request method'})
 
 
-def get_video(query):
-    # Set the API key
-    api_key = 'AIzaSyCi6S6uY5QpEI8MRZ7z2VJTH69sOI_SMuM'
-
-    # Build the YouTube API client
-    youtube = build('youtube', 'v3', developerKey=api_key)
-
+def generate_recipe(text):
+    prompt = f"""Extract the recipe data in json format like this {{{{"recipeData": {{"name": "string", 
+    "time": "int and nullable in minutes " "ingredients": [{{"name": "string","quantity": 1.1,"unit": "string"}}],
+    "steps": [{{"step": "string",}}]}}}}}} from this text: {text}. and set \n between 2 lines"""
     try:
-        # Search for videos matching the query, sorted by view count in descending order
-        search_response = youtube.search().list(
-            q=query + ' recipe',
-            type='video',
-            part='id',
-            maxResults=30,
-            order='viewCount',
-            fields='items(id(videoId))'
-        ).execute()
-
-        # Extract the video IDs from the search results
-        video_ids = [search_result['id']['videoId'] for search_result in search_response['items']]
-
-        # Retrieve video information (title, thumbnail, view count) for the matching videos
-        video_info = youtube.videos().list(
-            part='snippet,statistics,contentDetails',
-            id=','.join(video_ids),
-            fields='items(id,snippet(channelTitle,title,thumbnails/high/url,publishedAt),statistics(viewCount),contentDetails(duration))'
-        ).execute()
-
-    except HttpError as error:
-        print('An error occurred: %s' % error)
-
-    # Initialize variables for tracking the video with the most views
-    max_views = 0
-    link_of_max_views = ""
-    title_of_max_views = ""
-    image_of_max_views = ""
-    duration_of_max_views = ""
-    channel_of_max_views = ""
-    published_date_of_max_views = ""
-
-    # Loop through the retrieved video information to find the video with the most views
-    for video_result in video_info['items']:
-        video_id = video_result['id']
-        video_url = f'https://www.youtube.com/watch?v={video_id}'
-        views = video_result['statistics']['viewCount']
-        title = video_result['snippet']['title']
-        thumbnail_url = video_result['snippet']['thumbnails']['high']['url']
-        duration = video_result['contentDetails']['duration']
-        channel_title = video_result['snippet']['channelTitle']
-        published_date = datetime.strptime(video_result['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%S%z').strftime('%b %d, %Y')
-
-        # Convert the duration to a more readable format (e.g. "PT5M23S" -> "5:23")
-        duration = re.sub('[^0-9a-zA-Z]+', '', duration)  # remove non-alphanumeric characters
-        duration = duration.lower()
-        duration = duration.replace('pt', '')
-        duration = duration.replace('h', ':').replace('m', ':').replace('s', '')
-        if duration.startswith(':'):
-            duration = duration[1:]
-
-        # Update the variables tracking the video with the most views if this video has more views
-        if int(views) > int(max_views):
-            max_views = views
-            link_of_max_views = video_url
-            title_of_max_views = title
-            image_of_max_views = thumbnail_url
-            duration_of_max_views = duration
-            channel_of_max_views = channel_title
-            published_date_of_max_views = published_date
-
-    # Create a dictionary with the information about the video with the most views
-    data = {
-        'youtubeLink': link_of_max_views,
-        'title': title_of_max_views,
-        'image': image_of_max_views,
-        'duration': duration_of_max_views,
-        'channelName': channel_of_max_views,
-        'videoPostedDate': str(published_date_of_max_views)
-    }
-
-    # Return the dictionary
-    return data
+        response = openai.Completion.create(
+            engine="text-davinci-002",
+            prompt=prompt,
+            max_tokens=1024,
+            n=1,
+            stop=None,
+            temperature=0.5,
+        )
+    except Exception as e:
+        print(f'error : {e}')
+    recipe = response.choices[0].text
+    return recipe
 
 
-def convert_fraction(string):
-    if '½' in string:
-        fraction = unicodedata.numeric('½')
-        string = string.replace('½', str(fraction))
-    elif '¼' in string:
-        fraction = unicodedata.numeric('¼')
-        string = string.replace('¼', str(fraction))
-    elif '¾' in string:
-        fraction = unicodedata.numeric('¾')
-        string = string.replace('¾', str(fraction))
-    return string
-
+# Shopping list category functionality APIs ################################
 
 @api_view(['POST'])
 def create_shopping_list_category(request):
@@ -929,6 +1264,8 @@ def get_all_shopping_list_categories(request):
     else:
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
+
+# Shopping list item functionality APIs ################################
 
 @api_view(['POST'])
 def get_shopping_list_items(request):
@@ -1073,6 +1410,8 @@ def extract_lat_lon(gmaps_link):
     else:
         return JsonResponse({'error': 'No match found'})
 
+# markets in Whisk App functionality  APIs ################################
+
 
 @api_view(['POST'])
 def check_availability(request):
@@ -1145,174 +1484,7 @@ def check_availability(request):
     return Response(market_items, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
-def select_shopping_list_in_home_screen(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        category_id = data['categoryID']
-        user_id = data['userID']
-
-        if not category_id:
-            return Response({"error": "categoryID is required."}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            shopping_list_category = ShoppingListCategory.objects.get(pk=category_id)
-        except ShoppingListCategory.DoesNotExist:
-            return Response({"error": f"Category with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
-
-        if not user_id:
-            return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
-
-        shopping_list_name = shopping_list_category.name
-        shopping_list_id = shopping_list_category.id
-        user.selectedShoppingList = str(category_id)
-        user.save()
-        list_items = ShoppingListItem.objects.annotate(
-            orderNumberNEW=Window(
-                expression=RowNumber(),
-                order_by=F('orderNumber').asc()
-            )
-        ).filter(categoryID=shopping_list_category).order_by('orderNumber')
-        list_items = list_items.exclude(orderNumber__isnull=True).values('id', 'itemID', 'isCheck', 'orderNumberNEW')
-
-        new_list_of_items = []
-        for shopping_list_item in list_items:
-            # get name of Item using ItemID
-            item_id = shopping_list_item['itemID']
-            item_from_db = Item.objects.get(id=item_id)
-            new_list_of_items.append(
-                {
-                    'id': shopping_list_item['id'],
-                    'name': item_from_db.name,
-                    'isCheck': shopping_list_item['isCheck'],
-                    'orderID': shopping_list_item['orderNumberNEW']
-                }
-            )
-            if shopping_list_item['orderNumberNEW'] == 4:
-                break
-
-        category_data = {
-            "shoppingListCategoryID": str(shopping_list_id),
-            "shoppingListCategoryName": shopping_list_name,
-            "listOfItems": new_list_of_items,
-        }
-        return JsonResponse(category_data, status=status.HTTP_200_OK)
-    else:
-        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['POST'])
-def get_home_screen_data(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        user_id = data['userID']
-
-        # check if user id sent
-        if not user_id:
-            return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            user = User.objects.get(pk=user_id)
-        except User.DoesNotExist:
-            return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
-
-        # get the id of selected shopping list of user
-        selected_shopping_list_id = user.selectedShoppingList
-
-        # check if selected_shopping_list_id if its null or empty
-        if selected_shopping_list_id is None or selected_shopping_list_id == "":
-            # TODO :  must return empty object of shopping list
-            returned_shopping_list = None
-            print("no selected shopping list ")
-        try:
-            shopping_list_category = ShoppingListCategory.objects.get(pk=selected_shopping_list_id)
-
-            # get 4 items of shopping list
-            shopping_list_items = ShoppingListItem.objects.annotate(
-                orderNumberNEW=Window(
-                    expression=RowNumber(),
-                    order_by=F('orderNumber').asc()
-                )
-            ).filter(categoryID=shopping_list_category).order_by('orderNumber')
-            shopping_list_items = shopping_list_items.exclude(orderNumber__isnull=True).values('id', 'itemID',
-                                                                                               'isCheck',
-                                                                                               'orderNumberNEW')
-
-            new_list_of_items = []
-            for shopping_list_item in shopping_list_items:
-                # get name of Item using ItemID
-                item_id = shopping_list_item['itemID']
-                item_from_db = Item.objects.get(id=item_id)
-                new_list_of_items.append(
-                    {
-                        'id': shopping_list_item['id'],
-                        'name': item_from_db.name,
-                        'isCheck': shopping_list_item['isCheck'],
-                        'orderID': shopping_list_item['orderNumberNEW']
-                    }
-                )
-                if shopping_list_item['orderNumberNEW'] == 4:
-                    break
-
-            returned_shopping_list = {
-                "ShoppingListName": shopping_list_category.name,
-                "items": new_list_of_items
-            }
-        except ShoppingListCategory.DoesNotExist:
-            print("selected shopping list is deleted")
-            returned_shopping_list = None
-
-        # Get the four newest recipes for the user and sort the recipes by orderID,
-        # and assign new orderIDs based on the new order
-        # recently_added_recipes = Recipe.objects.filter(userID=user_id).exclude(orderID__isnull=True).order_by(
-        #     '-dateAdded').annotate(
-        #     new_orderID=Window(
-        #         expression=RowNumber(),
-        #         order_by=F('orderID').asc()
-        #     )
-        # ).order_by('orderID')[:4].values('id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time',
-        #                                      'pictureUrl', 'isEditorChoice', 'orderIDNEW')
-
-        recently_added_recipes = Recipe.objects.annotate(
-            orderIDNEW=Window(
-                expression=RowNumber(),
-            )
-        ).filter(userID=user_id).order_by('-dateAdded').exclude(orderID__isnull=True)[:4].values(
-            'id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
-
-        returned_recently_recipe_added = []
-        order = 1
-        for recipe in recently_added_recipes:
-            video_data = {
-                'youtubeLink': recipe['videoUrl'],
-                'title': recipe['videoTitle'],
-                'image': recipe['videoImage'],
-            }
-            recipe_data = {
-                'id': recipe['id'],
-                'name': recipe['title'],
-                'time': recipe['time'],
-                'pictureUrl': recipe['pictureUrl'],
-                'videoUrl': video_data,
-                'isEditorChoice': recipe['isEditorChoice'],
-                'orderID': order
-            }
-            returned_recently_recipe_added.append(recipe_data)
-            order += 1
-
-        returned_data = {
-            "recentlyAdded": returned_recently_recipe_added,
-            "selectedShoppingList": returned_shopping_list
-        }
-
-        return Response(returned_data, status=status.HTTP_200_OK)
-    else:
-        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
-
-
-# these all views not used for now
+# Apis Just for testing :
 
 @api_view(['GET'])
 def send_name(request, name):
