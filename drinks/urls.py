@@ -43,7 +43,7 @@ urlpatterns = [
     path('selectShoppingListInHomeScreen/', views.select_shopping_list_in_home_screen),
     path('getHomeScreenData/', views.get_home_screen_data),
     path('getAllEditorsChoice/', views.get_all_editors_choice_recipes),
-    # Django Admin
+    # Django Admin must change it to more secure
     path('admin/', admin.site.urls),
     # test Api
     path('sendAndGetMyName/<str:name>/', views.send_name, ),
