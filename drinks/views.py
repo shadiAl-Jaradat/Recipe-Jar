@@ -1415,73 +1415,81 @@ def extract_lat_lon(gmaps_link):
 
 @api_view(['POST'])
 def check_availability(request):
-    data = json.loads(request.body)
-    # get the list of items names from the request
-    names = data['listOfItemsNames']
-    # get the user's latitude and longitude from the request
-    print("shady test ")
-    print(data['userLat'])
-    print(data['userLon'])
-    user_lat = float(data['userLat'])
-    user_lon = float(data['userLon'])
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        # get the list of items names from the request
+        names = data['listOfItemsNames']
+        # get the user's latitude and longitude from the request
+        user_lat = float(data['userLat'])
+        user_lon = float(data['userLon'])
 
-    # get the list of items and markets
-    items = Item.objects.filter(name__in=names)
-    markets = Market.objects.all()
+        # Convert all names to lowercase
 
-    # get the list of available items for each market
-    market_items = []
-    for market in markets:
+        lower_names = [name.lower() for name in names]
 
-        items_available = MarketItem.objects.filter(marketID=market, itemID__in=items)
-        item_names_available = list(items_available.values_list('itemID__name', flat=True))
+        # get the list of items and markets
+        items = Item.objects.filter(name__in=lower_names)
+        markets = Market.objects.all()
 
-        available_items = [(name, name in item_names_available) for name in names]
+        # get the list of available items for each market
+        market_items = []
+        for market in markets:
 
-        list_of_available_items = []
-        for name in names:
-            list_of_available_items.append(
-                {
-                    "itemName": name,
-                    "isAvailable": name in item_names_available,
-                }
-            )
+            items_available = MarketItem.objects.filter(marketID=market, itemID__in=items)
 
-        item_ids = [item.itemID_id for item in items_available]
-        num_available = len(item_ids)
-        print(market.location)
-        market_lat, market_lon = extract_lat_lon(market.location)
+            item_names_available = list(items_available.values_list('itemID__name', flat=True))
 
-        # set connection with google api using api key
-        gmaps_client = googlemaps.Client(key='AIzaSyBTSe2uK5-e9aS35lkm5sz_y3z3AF67H0w')
-        source = f'{user_lat},{user_lon}'
-        destination = f'{market_lat},{market_lon}'
+            available_items = [(name.lower(), name.lower() in [item.lower() for item in item_names_available]) for name
+                               in names]
 
-        # get all info distance matrix
-        direction_result = gmaps_client.directions(source,
-                                                   destination,
-                                                   mode="driving",
-                                                   avoid="ferries",
-                                                   departure_time=datetime.now(),
-                                                   transit_mode='car')
+            list_of_available_items = []
+            i = 0
+            for lower_name in lower_names:
+                list_of_available_items.append(
+                    {
+                        "itemName": names[i],
+                        "isAvailable": lower_name in [item.lower() for item in item_names_available],
+                    }
+                )
+                i += 1
 
-        dist = direction_result[0]['legs'][0]['distance']
-        dist = dist['text']
+            item_ids = [item.itemID_id for item in items_available]
+            num_available = len(item_ids)
+            market_lat, market_lon = extract_lat_lon(market.location)
 
-        # add new market object
-        market_items.append({
-            'marketName': market.name,
-            'marketLogo': market.logo,
-            'marketLat': str(market_lat),
-            'marketLon': str(market_lon),
-            'locationLink': market.location,
-            'distance': dist,
-            'numAvailableItems': num_available,
-            'availableItems': list_of_available_items
-        })
+            # set connection with go-ogle api using api key
+            gmaps_client = googlemaps.Client(key='AIzaSyBTSe2uK5-e9aS35lkm5sz_y3z3AF67H0w')
+            source = f'{user_lat},{user_lon}'
+            destination = f'{market_lat},{market_lon}'
 
-    # return the list of available items for each market as a JSON response
-    return Response(market_items, status=status.HTTP_200_OK)
+            # get all info distance matrix
+            direction_result = gmaps_client.directions(source,
+                                                       destination,
+                                                       mode="driving",
+                                                       avoid="ferries",
+                                                       departure_time=datetime.now(),
+                                                       transit_mode='car')
+
+            dist = direction_result[0]['legs'][0]['distance']
+            dist = dist['text']
+
+            # add new market object
+            market_items.append({
+                'marketName': market.name,
+                'marketLogo': market.logo,
+                'marketLat': str(market_lat),
+                'marketLon': str(market_lon),
+                'locationLink': market.location,
+                'distance': dist,
+                'numAvailableItems': num_available,
+                'availableItems': list_of_available_items
+            })
+
+        # return the list of available items for each market as a JSON response
+        return Response(market_items, status=status.HTTP_200_OK)
+    else:
+        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 # Apis Just for testing :
