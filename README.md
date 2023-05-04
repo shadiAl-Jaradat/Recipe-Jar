@@ -2,7 +2,7 @@
 
 # Overview
 
-This project is the backend of the Recipe Jar system. It provides a set of APIs that are used by the Recipe Jar iOS app to search for recipes and retrieve detailed information about them. The APIs are designed to be easy to use and provide a seamless user experience.
+This project is the backend of the Recipe Jar system. It provides a set of RESTful APIs that are used by the Recipe Jar iOS app to search for recipes and retrieve detailed information about them. The APIs are designed to be easy to use and provide a seamless user experience.
 
 FrontEnd - [@RecipeJar IOS App](https://github.com/othmansh0/Recipe-Jar)
 
