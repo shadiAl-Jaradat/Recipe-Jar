@@ -479,7 +479,7 @@ def get_recipe_ingredients(request):
                     'name': item_from_db.name,
                     'quantity': quantity,
                     'unit': unit_name,
-                    'orderNumber': order_id
+                    'orderID': order_id
                 }
             )
 
