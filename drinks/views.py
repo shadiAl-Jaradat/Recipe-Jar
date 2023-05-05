@@ -832,8 +832,14 @@ def save_recipe(request):
 
             for ingredient in ingredients:
                 item_name = ingredient['name']
-                quantity = ingredient['quantity']
-                unit_name = ingredient['unit']
+                if 'quantity' not in ingredient:
+                    ingredient['quantity'] = ""
+                else:
+                    quantity = ingredient['quantity']
+                if 'unit' not in ingredient:
+                    unit_name = ""
+                else:
+                    unit_name = ingredient['unit']
                 order_id = ingredient['orderID']
                 try:
                     item_from_db = Item.objects.get(name=item_name)
