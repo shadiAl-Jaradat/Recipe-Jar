@@ -760,9 +760,16 @@ def get_home_screen_data(request):
 def save_recipe(request):
     # global item_from_db, unit_from_db
     if request.method == 'POST':
+        recipe_data = request.body
+        # Print the request body to the terminal
+        print(recipe_data)
         try:
             # Parse the request body
-            data = json.loads(request.body)
+
+            try:
+                data = json.loads(request.body)
+            except Exception as e:
+                return JsonResponse({'error': f'Error occurred while processing text: {e}.'}, status=405)
             category_id = UUID(data['recipeCategoryID'])
             recipe_name = data['name']
             time = data['time']
