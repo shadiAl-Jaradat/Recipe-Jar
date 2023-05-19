@@ -10,7 +10,7 @@ urlpatterns = [
     path('change_location_page/', views.change_location_page, name='change_location_page'),
     path('change_market_location/', views.change_market_location, name="change_market_location"),
     path('get_market_data/', views.get_market_data, name='get_market_data'),
-    path('getItemsFromExcel/', views.get_item_from_excel),
+    path('get_item_from_excel/', views.get_item_from_excel, name='get_item_from_excel'),
     # user Apis
     path('createUser/', views.create_user, name=""),
     path('updateUserInfo/', views.update_user_data),
@@ -49,6 +49,12 @@ urlpatterns = [
     path('sendAndGetMyName/<str:name>/', views.send_name, ),
     # ocr
     path('generateRecipeUsingGPT/', views.generate_recipe_ocr),
+    # e Attendance projects
+    path('eAttendanceHomeScreen/', views.e_attendance_home_screen, name='e_attendance_home_screen'),
+    path('checkAttendanceFromVideo/', views.check_attendance_from_video, name='checkAttendanceFromVideo'),
+    path('upload/', views.upload_file, name='upload_file'),
+    path('upload_videos/', views.upload_videos, name='upload_videos'),
+
 ]
 
 handler404 = 'drinks.views.error_404_view'

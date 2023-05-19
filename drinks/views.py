@@ -4,10 +4,11 @@ import googlemaps
 from django.db.models import Window
 from django.db.models import F
 from django.db.models.functions import RowNumber
+from django.views.decorators.csrf import csrf_exempt
 from googleapiclient.errors import HttpError
 from rest_framework.generics import get_object_or_404
 from .serializer import IngredientSerializer, RecipeCategorySerializer, StepSerializer, \
-    UserSerializer, ShoppingListCategorySerializer, RecipeSerializer
+    UserSerializer, ShoppingListCategorySerializer, VideoSerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem, \
     Market, MarketItem
 from googleapiclient.discovery import build
@@ -25,7 +26,7 @@ import pandas as pd
 import requests
 import re
 from .secrets import openai
-
+from django.http import HttpResponse
 
 def error_404_view(request, exception):
     return render(request, 'whiskTemplates/404.html', status=404)
@@ -104,37 +105,49 @@ def change_market_location(request):
 def get_item_from_excel(request):
     if request.method == 'POST':
         # Get the uploaded file from the request
-        file = request.FILES['file']
-        market_id = request.data.get('marketID')
-        market = Market.objects.filter(id=market_id).first()
-        # Load the Excel file using pandas
-        df = pd.read_excel(file)
-        # Get the values in the "Item Name" column
-        item_names = df['Item name'].tolist()
+        file = None  # Assign a default value
+        try:
+            file = request.FILES['file']
+        except Exception as e:
+            print(f'error : {e}')
 
-        for item_name in item_names:
-            try:
-                item_from_db = Item.objects.get(name=item_name)
-                item = item_from_db
-            except Item.DoesNotExist:
-                items_length = Item.objects.count()
-                item = Item(id=items_length + 1, name=item_name)
-                item.save()
+        if file is not None:
+            market_id = request.data.get('marketID')
+            market = Market.objects.filter(id=market_id).first()
 
-            market_item_id = uuid4()
-            # Create the marketItem instance
-            market_item = MarketItem(
-                id=market_item_id,
-                itemID=item,
-                marketID=market
-            )
-            market_item.save()
+            # Delete old market items associated with the market
+            MarketItem.objects.filter(marketID=market).delete()
 
-        # Return the list of item names as a JSON response
-        return JsonResponse({'item_names': item_names})
+            # Load the Excel file using pandas
+            df = pd.read_excel(file)
+            # Get the values in the "Item Name" column
+            item_names = df['Item name'].tolist()
+
+            for item_name in item_names:
+                try:
+                    item_from_db = Item.objects.get(name=item_name)
+                    item = item_from_db
+                except Item.DoesNotExist:
+                    items_length = Item.objects.count()
+                    item = Item(id=items_length + 1, name=item_name)
+                    item.save()
+
+                market_item_id = uuid4()
+                # Create the marketItem instance
+                market_item = MarketItem(
+                    id=market_item_id,
+                    itemID=item,
+                    marketID=market
+                )
+                market_item.save()
+
+            # Return the list of item names as a JSON response
+            return JsonResponse({'item_names': item_names})
+        else:
+            return JsonResponse({'error': 'File not found in request.FILES'})
+
     # If the request method is not POST, return an error response
     return JsonResponse({'error': 'Invalid request method'})
-
 
 # User Functionality APIs ################################
 
@@ -1504,7 +1517,6 @@ def check_availability(request):
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 # Apis Just for testing :
 
 @api_view(['GET'])
@@ -1512,4 +1524,50 @@ def send_name(request, name):
     if request.method == 'GET':
         return JsonResponse({"name": name})
     else:
-        return HttpResponseBadRequest("Bad Request: Only GET requests are allowed")
+        return HttpResponseBadRequest\
+            ("Bad Request: Only GET requests are allowed")
+
+
+# APIs for Yousef AI project
+def e_attendance_home_screen(request):
+    return render(request, 'whiskTemplates/eAttendanceHomeScreen.html')
+
+
+@api_view(['POST'])
+def check_attendance_from_video(request):
+    serializer = VideoSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        # Call your API here to process the videos and get the attendance sheet
+        # ...
+        # Create a download link for the attendance sheet
+        download_link = "/path/to/download/attendance/sheet"
+        # Return an HTML response with the download link
+        return Response(f"<a href='{download_link}'>Download Attendance Sheet</a>")
+    return Response(serializer.errors, status=400)
+
+
+@csrf_exempt
+def upload_file(request):
+    if request.method == "POST":
+        file_name = request.FILES['file'].name
+        file_content = request.FILES['file'].read()
+
+        # Save the file to the filesystem
+        with open('files/' + file_name, 'wb') as f:
+            f.write(file_content)
+
+        # Return a success response
+        return Response("File uploaded successfully!")
+
+    else:
+        return Response("Invalid request method.")
+
+
+def upload_videos(request):
+  first_video = request.FILES['file']
+  second_video = request.FILES['second_file']
+
+  # Do something with the videos...
+
+  return HttpResponse("Videos uploaded successfully!")

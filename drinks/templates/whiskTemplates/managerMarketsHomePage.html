@@ -284,19 +284,24 @@
               const fileInput = document.querySelector('.upload-input');
               const file = fileInput.files[0];
               if (file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+                const marketID = localStorage.getItem("marketID");
                 const formData = new FormData();
                 formData.append('file', file);
-                formData.append('marketID', localStorage.getItem("marketID"))
-
-                fetch('/getItemsFromExcel/', {
+                formData.append('marketID', marketID);
+                const url = '{% url "get_item_from_excel" %}';
+                const csrftokenTwo = getCookie('csrftoken');
+                fetch(url, {
                   method: 'POST',
+                  headers: {
+                    'X-CSRFToken': csrftokenTwo
+                  },
                   body: formData,
                 })
                   .then(response => response.json())
                   .then(data => {
                     console.log(data);
-                        const dropzone = document.querySelector('.upload-image');
-                        dropzone.innerHTML = `<img width="45" height="45" src="http://100dayscss.com/codepen/upload.svg" class="upload-icon" />`;
+                    const dropzone = document.querySelector('.upload-image');
+                    dropzone.innerHTML = `<img width="45" height="45" src="http://100dayscss.com/codepen/upload.svg" class="upload-icon" />`;
 
                     const deleteBtnZone = document.querySelector('.delete-btn');
                     deleteBtnZone.innerHTML = `<h2>File uploaded successfully ...</h2>`;
@@ -309,7 +314,8 @@
               } else {
                 alert('Please select an Excel file.');
               }
-         }
+            }
+
 
          document.getElementById("changeLocation").addEventListener("click", function() {
                 marketID_DB = localStorage.getItem("marketID");
