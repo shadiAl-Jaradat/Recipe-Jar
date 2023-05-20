@@ -552,7 +552,7 @@ def get_all_editors_choice_recipes(request):
                 order_by=F('orderID').asc()
             )
         ).filter(isEditorChoice=True).order_by('orderID').exclude(orderID__isnull=True).values(
-            'id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
+            'id', 'videoUrl', 'videoTitle', 'videoChannelName', 'videoImage','videoDuration', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
 
         new_list_of_editors_choice_recipes = []
 
@@ -585,6 +585,48 @@ def get_all_editors_choice_recipes(request):
     else:
         # If the request method is not GET, return an error response with HTTP status code 405
         return JsonResponse({'error': 'this API is POST API'}, status=405)
+
+
+def recent_recipes_api(user_id):
+
+    # Retrieve the user object
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return JsonResponse({'error': 'User not found'}, status=404)
+
+    # Query the recently added recipes for the user
+    recent_recipes = (
+        Recipe.objects.filter(category__user=user)
+        .order_by('-dateAdded')  # Sort by newest to oldest
+        .values('title', 'id', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'videoUrl', 'videoImage',
+                'videoTitle', 'videoDuration', 'videoChannelName', 'videoPostedDate')
+        [:4]  # Limit to 4 recipes
+    )
+
+    # Prepare the JSON response
+    order = 1
+    response_data = []
+    for recipe in recent_recipes:
+        video_data = {
+            'youtubeLink': recipe['videoUrl'],
+            'title': recipe['videoTitle'],
+            'image': recipe['videoImage'],
+            'duration': recipe['videoDuration'],
+            'channelName': recipe['videoChannelName']
+        }
+        response_data.append({
+            'id': recipe['id'],
+            'name': recipe['title'],
+            'time': recipe['time'],
+            'pictureUrl': recipe['pictureUrl'],
+            'isEditorChoice': recipe['isEditorChoice'],
+            'orderID': order,
+            'videoUrl': video_data,
+        })
+        order += 1
+
+    return response_data
 
 
 @api_view(['POST'])
@@ -722,7 +764,7 @@ def get_home_screen_data(request):
                     break
 
             returned_shopping_list = {
-                "ShoppingListName": shopping_list_category.name,
+                "shoppingListName": shopping_list_category.name,
                 "items": new_list_of_items
             }
         except ShoppingListCategory.DoesNotExist:
@@ -730,35 +772,35 @@ def get_home_screen_data(request):
             returned_shopping_list = None
 
         # retrieve the four newest recipes for the user and sort them by the date they were added
-        recently_added_recipes = Recipe.objects.annotate(
-            orderIDNEW=Window(
-                expression=RowNumber(),
-            )
-        ).filter(userID=user_id).order_by('-dateAdded').exclude(orderID__isnull=True)[:4].values(
-            'id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
+        # recently_added_recipes = Recipe.objects.annotate(
+        #     orderIDNEW=Window(
+        #         expression=RowNumber(),
+        #     )
+        # ).filter(userID=user_id).order_by('-dateAdded').exclude(orderID__isnull=True)[:4].values(
+        #     'id', 'videoUrl', 'videoTitle', 'videoImage', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
 
-        returned_recently_recipe_added = []
-        order = 1
-        for recipe in recently_added_recipes:
-            video_data = {
-                'youtubeLink': recipe['videoUrl'],
-                'title': recipe['videoTitle'],
-                'image': recipe['videoImage'],
-            }
-            recipe_data = {
-                'id': recipe['id'],
-                'name': recipe['title'],
-                'time': recipe['time'],
-                'pictureUrl': recipe['pictureUrl'],
-                'videoUrl': video_data,
-                'isEditorChoice': recipe['isEditorChoice'],
-                'orderID': order
-            }
-            returned_recently_recipe_added.append(recipe_data)
-            order += 1
+        # returned_recently_recipe_added = []
+        # order = 1
+        # for recipe in recently_added_recipes:
+        #     video_data = {
+        #         'youtubeLink': recipe['videoUrl'],
+        #         'title': recipe['videoTitle'],
+        #         'image': recipe['videoImage'],
+        #     }
+        #     recipe_data = {
+        #         'id': recipe['id'],
+        #         'name': recipe['title'],
+        #         'time': recipe['time'],
+        #         'pictureUrl': recipe['pictureUrl'],
+        #         'videoUrl': video_data,
+        #         'isEditorChoice': recipe['isEditorChoice'],
+        #         'orderID': order
+        #     }
+        #     returned_recently_recipe_added.append(recipe_data)
+        #     order += 1
 
         returned_data = {
-            "recentlyAdded": returned_recently_recipe_added,
+            "recentlyAdded": recent_recipes_api(user_id),
             "selectedShoppingList": returned_shopping_list
         }
 

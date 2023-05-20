@@ -42,6 +42,7 @@ urlpatterns = [
     # Home Screen
     path('selectShoppingListInHomeScreen/', views.select_shopping_list_in_home_screen),
     path('getHomeScreenData/', views.get_home_screen_data),
+    path('api/recent_recipes/', views.recent_recipes_api, name='recent_recipes_api'),
     path('getAllEditorsChoice/', views.get_all_editors_choice_recipes),
     # Django Admin must change it to more secure
     path('admin/', admin.site.urls),
