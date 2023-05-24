@@ -34,12 +34,10 @@ def error_404_view(request, exception):
 
 
 def svg_image_api(request):
-    # Read the SVG file
-    with open('drinks/images/defaultRecipeImage.svg', 'rb') as svg_file:
-        svg_content = svg_file.read()
-
-    # Set the content type to "image/svg+xml"
-    response = HttpResponse(content=svg_content, content_type='image/svg+xml')
+    # Read the PNG file
+    with open('drinks/images/defaultRecipeImage.png', 'rb') as png_file:
+        svg_content = png_file.read()
+    response = HttpResponse(content=svg_content, content_type='image/png')
     return response
 
 
