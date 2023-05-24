@@ -28,8 +28,19 @@ import re
 from .secrets import openai
 from django.http import HttpResponse
 
+
 def error_404_view(request, exception):
     return render(request, 'whiskTemplates/404.html', status=404)
+
+
+def svg_image_api(request):
+    # Read the SVG file
+    with open('drinks/images/defaultRecipeImage.svg', 'rb') as svg_file:
+        svg_content = svg_file.read()
+
+    # Set the content type to "image/svg+xml"
+    response = HttpResponse(content=svg_content, content_type='image/svg+xml')
+    return response
 
 
 def home(request):
@@ -104,7 +115,6 @@ def change_market_location(request):
 @api_view(['POST'])
 def get_item_from_excel(request):
     if request.method == 'POST':
-        # Get the uploaded file from the request
         file = None  # Assign a default value
         try:
             file = request.FILES['file']
@@ -120,7 +130,7 @@ def get_item_from_excel(request):
 
             # Load the Excel file using pandas
             df = pd.read_excel(file)
-            # Get the values in the "Item Name" column
+            # Get the values in the "Item Name" column from the Excel file
             item_names = df['Item name'].tolist()
 
             for item_name in item_names:
@@ -133,7 +143,6 @@ def get_item_from_excel(request):
                     item.save()
 
                 market_item_id = uuid4()
-                # Create the marketItem instance
                 market_item = MarketItem(
                     id=market_item_id,
                     itemID=item,
@@ -141,7 +150,6 @@ def get_item_from_excel(request):
                 )
                 market_item.save()
 
-            # Return the list of item names as a JSON response
             return JsonResponse({'item_names': item_names})
         else:
             return JsonResponse({'error': 'File not found in request.FILES'})
@@ -410,6 +418,7 @@ def get_all_recipes(request):
                                                                                                  'videoImage',
                                                                                                  'videoDuration',
                                                                                                  'videoChannelName',
+                                                                                                 'videoPostedDate',
                                                                                                  'title', 'time',
                                                                                                  'pictureUrl',
                                                                                                  'isEditorChoice',
@@ -427,7 +436,8 @@ def get_all_recipes(request):
                 'title': recipe['videoTitle'],
                 'image': recipe['videoImage'],
                 'duration': recipe['videoDuration'],
-                'channelName': recipe['videoChannelName']
+                'channelName': recipe['videoChannelName'],
+                'videoPostedDate':recipe['videoPostedDate']
             }
             recipe_data = {
                 'id': recipe['id'],
@@ -552,7 +562,7 @@ def get_all_editors_choice_recipes(request):
                 order_by=F('orderID').asc()
             )
         ).filter(isEditorChoice=True).order_by('orderID').exclude(orderID__isnull=True).values(
-            'id', 'videoUrl', 'videoTitle', 'videoChannelName', 'videoImage','videoDuration', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
+            'id', 'videoUrl', 'videoTitle', 'videoChannelName', 'videoPostedDate', 'videoImage', 'videoDuration', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
 
         new_list_of_editors_choice_recipes = []
 
@@ -563,7 +573,8 @@ def get_all_editors_choice_recipes(request):
                 'title': recipe['videoTitle'],
                 'channelName': recipe['videoChannelName'],
                 'image': recipe['videoImage'],
-                'duration': recipe['videoDuration']
+                'duration': recipe['videoDuration'],
+                'videoPostedDate': recipe['videoPostedDate']
             }
 
             # create a new dictionary for the recipe data
@@ -613,7 +624,8 @@ def recent_recipes_api(user_id):
             'title': recipe['videoTitle'],
             'image': recipe['videoImage'],
             'duration': recipe['videoDuration'],
-            'channelName': recipe['videoChannelName']
+            'channelName': recipe['videoChannelName'],
+            'videoPostedDate': recipe['videoPostedDate']
         }
         response_data.append({
             'id': recipe['id'],
@@ -845,15 +857,17 @@ def save_recipe(request):
                 return Response({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 user = User.objects.get(pk=user_id)
-            except:
-                return Response({"error": f"User with ID {user_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({f"error": f"User with ID {user_id} does not exist. and Error : {e}"},
+                                status=status.HTTP_404_NOT_FOUND)
 
             if not category_id:
                 return Response({"error": "category_id is required."}, status=status.HTTP_400_BAD_REQUEST)
             try:
                 category = RecipeCategory.objects.get(pk=category_id)
-            except:
-                return Response({"error": f"category with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+            except Exception as e:
+                return Response({f"error": f"category with ID {category_id} does not exist. and Error : {e}"},
+                                status=status.HTTP_404_NOT_FOUND)
 
             video_data = get_video(recipe_name)
             video_url = video_data['youtubeLink']
@@ -880,7 +894,6 @@ def save_recipe(request):
                             videoPostedDate=video_published_date,
                             isEditorChoice=is_editor_choice,
                             category=category,
-                            userID=user,
                             orderID=order_id
                             )
             recipe.save()
@@ -1044,7 +1057,6 @@ def get_video(query):
 def get_recipe_information_web_extension(request):
     if request.method == 'POST':
         try:
-            # extracts website URL and user ID from the request body and loads it as JSON
             data = json.loads(request.body)
             website_url = data['websiteUrl']
             user_id = data['userID']
@@ -1059,7 +1071,7 @@ def get_recipe_information_web_extension(request):
             categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
 
             # serializes the categories data
-            serializer = RecipeCategorySerializer(categories, many=True)
+            categories_serializer = RecipeCategorySerializer(categories, many=True)
 
             # scrapes the website for recipe information
             scraper = scrape_me(website_url)
@@ -1067,39 +1079,20 @@ def get_recipe_information_web_extension(request):
             ingredients = []
             steps = []
 
-            # extracts ingredients from the scraped recipe and formats them as a list
+            # extracts ingredients from the scraped recipe and formats them as a list of objects
             for ingredient in scraper.ingredients():
 
-                # parses the quantity and unit of the ingredient using a natural language processing library
-                quants = parser.parse(ingredient)
-                if quants.__len__() == 0:
-                    quantity = None
-                    unit = None
-                else:
-                    quantity = quants[0].value
-                    unit = quants[0].unit.name
-
-                if unit == 'dimensionless':
-                    unit = None
-
-                # normalizes the ingredient name by converting fractions to decimal values
-                ingredient_parce_name = parse(convert_fraction(ingredient))
-                if ',' in ingredient_parce_name['name']:
-                    ingredient_parce_name = ingredient_parce_name['name'].split(',')[0]
-                else:
-                    ingredient_parce_name = ingredient_parce_name['name']
-
-                # adds the formatted ingredient to the list
+                # adds the formatted ingredient to the list and set quantity and unit to Null Value.
                 ingredients.append(
                     {
-                        'name': ingredient_parce_name,
-                        'quantity': quantity,
-                        'unit': unit,
+                        'name': ingredient,
+                        'quantity': None,
+                        'unit': None,
                         'orderID': -1
                     }
                 )
 
-            # extracts recipe steps from the scraped recipe and formats them as a list
+            # extracts recipe steps from the scraped recipe and formats them as a list of objects
             for step in scraper.instructions_list():
                 steps.append(
                     {
@@ -1109,10 +1102,8 @@ def get_recipe_information_web_extension(request):
                 )
 
             try:
-                # attempts to extract the cook time from the scraped recipe
                 time = scraper.cook_time()
             except:
-                # sets cook time to None if it couldn't be extracted
                 time = None
 
             # Formats the scraped recipe data into a dictionary
@@ -1125,18 +1116,14 @@ def get_recipe_information_web_extension(request):
                 'steps': steps
             }
 
-            # Combines the recipe data and category data into a single dictionary
             all_data = {
                 'recipe': recipe_data,
-                "categories": serializer.data
+                "categories": categories_serializer.data
             }
-            # Returns the combined data as a JSON response with a 201 status code
             return Response(all_data, status=status.HTTP_201_CREATED, )
-        except:
-            # Returns a bad request response if the scraping failed
-            return HttpResponseBadRequest("Scraping not supported for this URL")
+        except Exception as e:
+            return HttpResponseBadRequest(f"Scraping not supported for this URL error {e}")
     else:
-        # Return an error response if the request method is not POST
         return JsonResponse({'error': 'this API is POST API'}, status=405)
 
 
@@ -1485,31 +1472,23 @@ def extract_lat_lon(gmaps_link):
 def check_availability(request):
     if request.method == 'POST':
         data = json.loads(request.body)
-        # get the list of items names from the request
         names = data['listOfItemsNames']
-        # get the user's latitude and longitude from the request
         user_lat = float(data['userLat'])
         user_lon = float(data['userLon'])
 
-        # Convert all names to lowercase
-
         lower_names = [name.lower() for name in names]
 
-        # get the list of items and markets
+        # get the list of "items objects" that match the names with the lower_names
         items = Item.objects.filter(name__in=lower_names)
+
         markets = Market.objects.all()
 
-        # get the list of available items for each market
+        # create a list of MarketItems objects that appends the name and status of each item
         market_items = []
         for market in markets:
 
             items_available = MarketItem.objects.filter(marketID=market, itemID__in=items)
-
             item_names_available = list(items_available.values_list('itemID__name', flat=True))
-
-            available_items = [(name.lower(), name.lower() in [item.lower() for item in item_names_available]) for name
-                               in names]
-
             list_of_available_items = []
             i = 0
             for lower_name in lower_names:
@@ -1537,11 +1516,8 @@ def check_availability(request):
                                                        avoid="ferries",
                                                        departure_time=datetime.now(),
                                                        transit_mode='car')
-
             dist = direction_result[0]['legs'][0]['distance']
             dist = dist['text']
-
-            # add new market object
             market_items.append({
                 'marketName': market.name,
                 'marketLogo': market.logo,
@@ -1552,8 +1528,6 @@ def check_availability(request):
                 'numAvailableItems': num_available,
                 'availableItems': list_of_available_items
             })
-
-        # return the list of available items for each market as a JSON response
         return Response(market_items, status=status.HTTP_200_OK)
     else:
         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)

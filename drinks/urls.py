@@ -50,6 +50,8 @@ urlpatterns = [
     path('sendAndGetMyName/<str:name>/', views.send_name, ),
     # ocr
     path('generateRecipeUsingGPT/', views.generate_recipe_ocr),
+    # default Recipe Image
+    path('defaultRecipeImage/', views.svg_image_api, name='svg_image_api'),
     # e Attendance projects
     path('eAttendanceHomeScreen/', views.e_attendance_home_screen, name='e_attendance_home_screen'),
     path('checkAttendanceFromVideo/', views.check_attendance_from_video, name='checkAttendanceFromVideo'),
