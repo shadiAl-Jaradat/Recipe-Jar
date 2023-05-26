@@ -24,6 +24,7 @@ urlpatterns = [
     path('renameRecipeCategory/', views.rename_recipe_category),
     path('deleteRecipeCategory/', views.delete_recipe_category),
     # recipe Apis
+    path('getUserRecipes/', views.get_user_recipes),
     path('getAllRecipes/', views.get_all_recipes),
     path('getRecipeIngredients/', views.get_recipe_ingredients),
     path('getRecipeSteps/', views.get_recipe_steps),

@@ -136,7 +136,3 @@ class MarketItem(models.Model):
     def __repr__(self):
         return self.id
 
-
-class Video(models.Model):
-    video1 = models.FileField(upload_to='videos/')
-

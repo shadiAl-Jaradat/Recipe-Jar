@@ -8,7 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from googleapiclient.errors import HttpError
 from rest_framework.generics import get_object_or_404
 from .serializer import IngredientSerializer, RecipeCategorySerializer, StepSerializer, \
-    UserSerializer, ShoppingListCategorySerializer, VideoSerializer
+    UserSerializer, ShoppingListCategorySerializer
 from .models import User, Recipe, Ingredient, Step, RecipeCategory, Unit, Item, ShoppingListCategory, ShoppingListItem, \
     Market, MarketItem
 from googleapiclient.discovery import build
@@ -19,8 +19,8 @@ import json
 from django.http import JsonResponse, HttpResponseBadRequest
 from recipe_scrapers import scrape_me
 from uuid import UUID, uuid4
-from quantulum3 import parser
-from ingredient_parser.en import parse
+# from quantulum3 import parser
+# from ingredient_parser.en import parse
 from django.shortcuts import render
 import pandas as pd
 import requests
@@ -35,7 +35,7 @@ def error_404_view(request, exception):
 
 def svg_image_api(request):
     # Read the PNG file
-    with open('drinks/images/defaultRecipeImage.png', 'rb') as png_file:
+    with open('/root/projects/Recipe-Jar/drinks/images/defaultRecipeImage.png', 'rb') as png_file:
         svg_content = png_file.read()
     response = HttpResponse(content=svg_content, content_type='image/png')
     return response
@@ -154,6 +154,7 @@ def get_item_from_excel(request):
 
     # If the request method is not POST, return an error response
     return JsonResponse({'error': 'Invalid request method'})
+
 
 # User Functionality APIs ################################
 
@@ -435,7 +436,7 @@ def get_all_recipes(request):
                 'image': recipe['videoImage'],
                 'duration': recipe['videoDuration'],
                 'channelName': recipe['videoChannelName'],
-                'videoPostedDate':recipe['videoPostedDate']
+                'videoPostedDate': recipe['videoPostedDate']
             }
             recipe_data = {
                 'id': recipe['id'],
@@ -452,6 +453,54 @@ def get_all_recipes(request):
         return Response(new_list_of_recipes, status=status.HTTP_200_OK)
     else:
         # return an error message if the request method is not POST
+        return JsonResponse({'error': 'this API is POST API'}, status=405)
+
+
+@api_view(['POST'])
+def get_user_recipes(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        user_id = data['userID']
+        if not user_id:
+            return JsonResponse({"error": "userID is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+
+        # Query the recently added recipes for the user
+        recent_recipes = (
+            Recipe.objects.filter(category__user=user)
+            .order_by('-dateAdded')  # Sort by newest to oldest
+            .values('title', 'id', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'videoUrl', 'videoImage',
+                    'videoTitle', 'videoDuration', 'videoChannelName', 'videoPostedDate')
+        )
+
+        # Prepare the JSON response
+        order = 1
+        list_of_recipes = []
+        for recipe in recent_recipes:
+            video_data = {
+                'youtubeLink': recipe['videoUrl'],
+                'title': recipe['videoTitle'],
+                'image': recipe['videoImage'],
+                'duration': recipe['videoDuration'],
+                'channelName': recipe['videoChannelName'],
+                'videoPostedDate': recipe['videoPostedDate']
+            }
+            list_of_recipes.append({
+                'id': recipe['id'],
+                'name': recipe['title'],
+                'time': recipe['time'],
+                'pictureUrl': recipe['pictureUrl'],
+                'isEditorChoice': recipe['isEditorChoice'],
+                'orderID': order,
+                'videoUrl': video_data,
+            })
+            order += 1
+
+        return Response(list_of_recipes, status=status.HTTP_200_OK)
+    else:
         return JsonResponse({'error': 'this API is POST API'}, status=405)
 
 
@@ -560,7 +609,8 @@ def get_all_editors_choice_recipes(request):
                 order_by=F('orderID').asc()
             )
         ).filter(isEditorChoice=True).order_by('orderID').exclude(orderID__isnull=True).values(
-            'id', 'videoUrl', 'videoTitle', 'videoChannelName', 'videoPostedDate', 'videoImage', 'videoDuration', 'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
+            'id', 'videoUrl', 'videoTitle', 'videoChannelName', 'videoPostedDate', 'videoImage', 'videoDuration',
+            'title', 'time', 'pictureUrl', 'isEditorChoice', 'orderIDNEW')
 
         new_list_of_editors_choice_recipes = []
 
@@ -597,7 +647,6 @@ def get_all_editors_choice_recipes(request):
 
 
 def recent_recipes_api(user_id):
-
     # Retrieve the user object
     try:
         user = User.objects.get(id=user_id)
@@ -655,7 +704,8 @@ def select_shopping_list_in_home_screen(request):
         try:
             shopping_list_category = ShoppingListCategory.objects.get(pk=category_id)
         except ShoppingListCategory.DoesNotExist:
-            return Response({"error": f"Category with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": f"Category with ID {category_id} does not exist."},
+                            status=status.HTTP_404_NOT_FOUND)
 
         # check if userID is provided
         if not user_id:
@@ -848,7 +898,8 @@ def save_recipe(request):
 
             if add_to_shopping_list:
                 if not shopping_list_category_id or shopping_list_category_id is None or shopping_list_category_id == "":
-                    return Response({"error": "shoppingListCategoryID is required."}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "shoppingListCategoryID is required."},
+                                    status=status.HTTP_400_BAD_REQUEST)
 
             # check anf get user object from DB
             if not user_id:
@@ -928,7 +979,6 @@ def save_recipe(request):
                         orderNumber=order_number
                     )
                     shopping_list_item.save()
-
 
                 if unit_name:
                     try:
@@ -1017,7 +1067,8 @@ def get_video(query):
         thumbnail_url = video_result['snippet']['thumbnails']['high']['url']
         duration = video_result['contentDetails']['duration']
         channel_title = video_result['snippet']['channelTitle']
-        published_date = datetime.strptime(video_result['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%S%z').strftime('%b %d, %Y')
+        published_date = datetime.strptime(video_result['snippet']['publishedAt'], '%Y-%m-%dT%H:%M:%S%z').strftime(
+            '%b %d, %Y')
 
         # convert the duration to a more readable format (e.g. "PT5M23S" -> "5:23")
         duration = re.sub('[^0-9a-zA-Z]+', '', duration)  # remove non-alphanumeric characters
@@ -1079,7 +1130,6 @@ def get_recipe_information_web_extension(request):
 
             # extracts ingredients from the scraped recipe and formats them as a list of objects
             for ingredient in scraper.ingredients():
-
                 # adds the formatted ingredient to the list and set quantity and unit to Null Value.
                 ingredients.append(
                     {
@@ -1177,7 +1227,8 @@ def generate_recipe_ocr(request):
         for ingredient in ingredients:
             ingredient_model = {
                 "name": ingredient["name"],
-                "quantity": None if ingredient["quantity"] == "" or ingredient["quantity"] == "none" else ingredient["quantity"],
+                "quantity": None if ingredient["quantity"] == "" or ingredient["quantity"] == "none" else ingredient[
+                    "quantity"],
                 "unit": None if ingredient["unit"] == "" else ingredient["unit"],
                 "orderID": -1
             }
@@ -1332,7 +1383,8 @@ def get_shopping_list_items(request):
         try:
             shopping_list_category = ShoppingListCategory.objects.get(pk=category_id)
         except ShoppingListCategory.DoesNotExist:
-            return Response({"error": f"Category with ID {category_id} does not exist."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": f"Category with ID {category_id} does not exist."},
+                            status=status.HTTP_404_NOT_FOUND)
 
         items = ShoppingListItem.objects.annotate(
             orderNumberNEW=Window(
@@ -1439,7 +1491,8 @@ def get_lat_lon_from_google_maps_link(link):
     place_id = place_id_list[0]
 
     # request the place details from the Google Maps API
-    response = requests.get(f'https://maps.googleapis.com/maps/api/place/details/json?place_id={place_id}&key=<your_api_key>')
+    response = requests.get(
+        f'https://maps.googleapis.com/maps/api/place/details/json?place_id={place_id}&key=<your_api_key>')
 
     # extract the latitude and longitude from the response
     lat = response.json()['result']['geometry']['location']['lat']
@@ -1462,6 +1515,7 @@ def extract_lat_lon(gmaps_link):
         return lat, lon
     else:
         return JsonResponse({'error': 'No match found'})
+
 
 # markets in Whisk App functionality  APIs ################################
 
@@ -1538,7 +1592,7 @@ def send_name(request, name):
     if request.method == 'GET':
         return JsonResponse({"name": name})
     else:
-        return HttpResponseBadRequest\
+        return HttpResponseBadRequest \
             ("Bad Request: Only GET requests are allowed")
 
 
@@ -1547,18 +1601,6 @@ def e_attendance_home_screen(request):
     return render(request, 'whiskTemplates/eAttendanceHomeScreen.html')
 
 
-@api_view(['POST'])
-def check_attendance_from_video(request):
-    serializer = VideoSerializer(data=request.data)
-    if serializer.is_valid():
-        serializer.save()
-        # Call your API here to process the videos and get the attendance sheet
-        # ...
-        # Create a download link for the attendance sheet
-        download_link = "/path/to/download/attendance/sheet"
-        # Return an HTML response with the download link
-        return Response(f"<a href='{download_link}'>Download Attendance Sheet</a>")
-    return Response(serializer.errors, status=400)
 
 
 @csrf_exempt
@@ -1579,9 +1621,9 @@ def upload_file(request):
 
 
 def upload_videos(request):
-  first_video = request.FILES['file']
-  second_video = request.FILES['second_file']
+    first_video = request.FILES['file']
+    second_video = request.FILES['second_file']
 
-  # Do something with the videos...
+    # Do something with the videos...
 
-  return HttpResponse("Videos uploaded successfully!")
+    return HttpResponse("Videos uploaded successfully!")
