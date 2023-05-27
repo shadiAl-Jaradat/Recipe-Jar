@@ -1,6 +1,7 @@
 import unicodedata
 from datetime import datetime
 import googlemaps
+import spacy
 from django.db.models import Window
 from django.db.models import F
 from django.db.models.functions import RowNumber
@@ -19,8 +20,8 @@ import json
 from django.http import JsonResponse, HttpResponseBadRequest
 from recipe_scrapers import scrape_me
 from uuid import UUID, uuid4
-# from quantulum3 import parser
-# from ingredient_parser.en import parse
+from quantulum3 import parser
+from ingredient_parser.en import parse
 from django.shortcuts import render
 import pandas as pd
 import requests
@@ -1102,6 +1103,17 @@ def get_video(query):
     return data
 
 
+nlp = spacy.load("en_core_web_sm")
+
+
+def extract_food_item_name(text):
+    doc = nlp(text)
+    noun_chunks = list(doc.noun_chunks)
+    for chunk in reversed(noun_chunks):
+        if not any(token.pos_ == 'NUM' or token.pos_ == 'SYM' for token in chunk):
+            return chunk.text.strip()
+    return None
+
 @api_view(['POST'])
 def get_recipe_information_web_extension(request):
     if request.method == 'POST':
@@ -1130,12 +1142,36 @@ def get_recipe_information_web_extension(request):
 
             # extracts ingredients from the scraped recipe and formats them as a list of objects
             for ingredient in scraper.ingredients():
-                # adds the formatted ingredient to the list and set quantity and unit to Null Value.
+
+                # parses the quantity and unit of the ingredient using a natural language processing library
+                quants = parser.parse(ingredient)
+                if quants.__len__() == 0:
+                    quantity = None
+                    unit = None
+                else:
+                    quantity = quants[0].value
+                    unit = quants[0].unit.name
+
+                if unit == 'dimensionless':
+                    unit = None
+
+                # solution one
+                # normalizes the ingredient name by converting fractions to decimal values
+                # ingredient_parce_name = parse(convert_fraction(ingredient))
+                # if ',' in ingredient_parce_name['name']:
+                #     ingredient_parce_name = ingredient_parce_name['name'].split(',')[0]
+                # else:
+                #     ingredient_parce_name = ingredient_parce_name['name']
+
+                # solution Two
+                ingredient_parce_name = extract_food_item_name(ingredient)
+
+                # adds the formatted ingredient to the list
                 ingredients.append(
                     {
-                        'name': ingredient,
-                        'quantity': None,
-                        'unit': None,
+                        'name': ingredient_parce_name,
+                        'quantity': quantity,
+                        'unit': unit,
                         'orderID': -1
                     }
                 )
