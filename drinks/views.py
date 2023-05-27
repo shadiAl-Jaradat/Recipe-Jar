@@ -1157,19 +1157,22 @@ def get_recipe_information_web_extension(request):
 
                 # solution one
                 # normalizes the ingredient name by converting fractions to decimal values
-                # ingredient_parce_name = parse(convert_fraction(ingredient))
-                # if ',' in ingredient_parce_name['name']:
-                #     ingredient_parce_name = ingredient_parce_name['name'].split(',')[0]
-                # else:
-                #     ingredient_parce_name = ingredient_parce_name['name']
+                ingredient_parce_name = parse(convert_fraction(ingredient))
+                if ',' in ingredient_parce_name['name']:
+                    ingredient_parce_name = ingredient_parce_name['name'].split(',')[0]
+                else:
+                    ingredient_parce_name = ingredient_parce_name['name']
 
                 # solution Two
-                ingredient_parce_name = extract_food_item_name(ingredient)
+                ingredient_parce_name_two = extract_food_item_name(ingredient)
+
+                if ingredient_parce_name_two == '' or ingredient_parce_name_two is None:
+                    ingredient_parce_name_two = ingredient_parce_name
 
                 # adds the formatted ingredient to the list
                 ingredients.append(
                     {
-                        'name': ingredient_parce_name,
+                        'name': ingredient_parce_name_two,
                         'quantity': quantity,
                         'unit': unit,
                         'orderID': -1
