@@ -1620,6 +1620,11 @@ def upload_file(request):
         return Response("Invalid request method.")
 
 
+@api_view(['POST'])
+def check_attendance_from_video(request):
+    return JsonResponse({'message': 'Video uploaded and processed successfully'})
+
+
 def upload_videos(request):
     first_video = request.FILES['file']
     second_video = request.FILES['second_file']
