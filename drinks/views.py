@@ -1105,11 +1105,10 @@ def get_video(query):
 
 nlp = spacy.load("en_core_web_sm")
 
-
-def extract_food_item_name(text):
+def extract_ingredient_name(text):
     doc = nlp(text)
     noun_chunks = list(doc.noun_chunks)
-    for chunk in reversed(noun_chunks):
+    for chunk in noun_chunks:
         if not any(token.pos_ == 'NUM' or token.pos_ == 'SYM' for token in chunk):
             return chunk.text.strip()
     return None
@@ -1130,11 +1129,9 @@ def get_recipe_information_web_extension(request):
 
             # fetches recipe categories for the given user and orders them by orderID
             categories = RecipeCategory.objects.filter(user=user).order_by('orderID')
-
-            # serializes the categories data
             categories_serializer = RecipeCategorySerializer(categories, many=True)
 
-            # scrapes the website for recipe information
+            # scrapes recipe information from the website url
             scraper = scrape_me(website_url)
 
             ingredients = []
@@ -1155,8 +1152,11 @@ def get_recipe_information_web_extension(request):
                 if unit == 'dimensionless':
                     unit = None
 
-                # solution one
-                # normalizes the ingredient name by converting fractions to decimal values
+                ingredient = re.sub(r'\([^)]*\)', '', ingredient)
+
+                # solution one - I use it only if solution two failed or return None
+                # normalizes the ingredient name by converting fractions to decimal
+                # values and delete the quantity and unit of the ingredient
                 ingredient_parce_name = parse(convert_fraction(ingredient))
                 if ',' in ingredient_parce_name['name']:
                     ingredient_parce_name = ingredient_parce_name['name'].split(',')[0]
@@ -1164,7 +1164,7 @@ def get_recipe_information_web_extension(request):
                     ingredient_parce_name = ingredient_parce_name['name']
 
                 # solution Two
-                ingredient_parce_name_two = extract_food_item_name(ingredient)
+                ingredient_parce_name_two = extract_ingredient_name(ingredient)
 
                 if ingredient_parce_name_two == '' or ingredient_parce_name_two is None:
                     ingredient_parce_name_two = ingredient_parce_name
@@ -1179,7 +1179,7 @@ def get_recipe_information_web_extension(request):
                     }
                 )
 
-            # extracts recipe steps from the scraped recipe and formats them as a list of objects
+            # formats the steps as a list of objects
             for step in scraper.instructions_list():
                 steps.append(
                     {
@@ -1190,7 +1190,8 @@ def get_recipe_information_web_extension(request):
 
             try:
                 time = scraper.cook_time()
-            except:
+            except Exception as e:
+                print(e)
                 time = None
 
             # Formats the scraped recipe data into a dictionary
