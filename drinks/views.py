@@ -1567,8 +1567,6 @@ def extract_lat_lon(gmaps_link):
 # markets in Whisk App functionality  APIs ################################
 
 
-from geopy.distance import geodesic
-
 @api_view(['POST'])
 def check_availability(request):
     if request.method == 'POST':
@@ -1605,10 +1603,20 @@ def check_availability(request):
             num_available = len(item_ids)
             market_lat, market_lon = extract_lat_lon(market.location)
 
-            # Calculate the distance between the user and the market using geodesic distance
-            user_location = (user_lat, user_lon)
-            market_location = (market_lat, market_lon)
-            distance = geodesic(user_location, market_location).km
+            # set connection with go-ogle api using api key
+            gmaps_client = googlemaps.Client(key='AIzaSyBTSe2uK5-e9aS35lkm5sz_y3z3AF67H0w')
+            source = f'{user_lat},{user_lon}'
+            destination = f'{market_lat},{market_lon}'
+
+            # get all info distance matrix
+            direction_result = gmaps_client.directions(source,
+                                                       destination,
+                                                       mode="driving",
+                                                       avoid="ferries",
+                                                       departure_time=datetime.now(),
+                                                       transit_mode='car')
+            dists = direction_result[0]['legs'][0]['distance']
+            dist = dists['text']
 
             market_items.append({
                 'marketName': market.name,
@@ -1616,18 +1624,32 @@ def check_availability(request):
                 'marketLat': str(market_lat),
                 'marketLon': str(market_lon),
                 'locationLink': market.location,
-                'distance': distance,
+                'distance': dist,
+                'distanceValue': dists['value'],
                 'numAvailableItems': num_available,
                 'availableItems': list_of_available_items
             })
 
         # Sort the market_items list based on numAvailableItems (descending) and then distance (ascending)
-        market_items.sort(key=lambda x: (-x['numAvailableItems'], x['distance']))
+        market_items.sort(key=lambda x: (-x['numAvailableItems'], x['distanceValue']))
 
-        return Response(market_items, status=status.HTTP_200_OK)
+        new_market_items = []
+
+        for m in market_items:
+            new_market_items.append({
+                'marketName': m['marketName'],
+                'marketLogo': m['marketLogo'],
+                'marketLat': m['marketLat'],
+                'marketLon': m['marketLon'],
+                'locationLink': m['locationLink'],
+                'distance': m['distance'],
+                'numAvailableItems': m['numAvailableItems'],
+                'availableItems': m['availableItems'],
+            })
+
+        return Response(new_market_items, status=status.HTTP_200_OK)
     else:
-        return JsonResponse({'message': 'This API is a POST API.'}, status=status.HTTP_400_BAD_REQUEST)
-
+        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # Apis Just for testing :
