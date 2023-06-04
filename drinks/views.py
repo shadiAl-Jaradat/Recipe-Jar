@@ -951,7 +951,8 @@ def save_recipe(request):
             for ingredient in ingredients:
                 item_name = ingredient['name']
                 if 'quantity' not in ingredient:
-                    ingredient['quantity'] = ""
+                    ingredient['quantity'] = None
+                    quantity = None
                 else:
                     quantity = ingredient['quantity']
                 if 'unit' not in ingredient:
@@ -994,8 +995,14 @@ def save_recipe(request):
 
                 ingredient_id = uuid4()
                 # Create the ingredient instance
-                ingredient = Ingredient(id=ingredient_id, itemID=item, quantity=quantity, unitID=unit,
-                                        recipe=recipe, orderNumber=order_id)
+                ingredient = Ingredient(
+                    id=ingredient_id,
+                    itemID=item,
+                    quantity=quantity,
+                    unitID=unit,
+                    recipe=recipe,
+                    orderNumber=order_id
+                )
                 ingredient.save()
 
             # Loop over the steps and create their related models
