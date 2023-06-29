@@ -6,6 +6,11 @@ This project is the backend of the Recipe Jar system. It provides a set of RESTf
 
 FrontEnd - [@RecipeJar IOS App](https://github.com/othmansh0/Recipe-Jar)
 
+
+# System Architecture :
+![WhatsApp Image 2023-06-29 at 2 28 47 PM](https://github.com/shadiAl-Jaradat/Recipe-Jar/assets/94618324/2a47de50-8299-42f0-a96c-62a653a99cec)
+
+
 # APIs Used : 
 
 ●  [OpenAI API](https://openai.com/blog/openai-api) : Used to scrape recipe information from text and convert it to JSON format.
