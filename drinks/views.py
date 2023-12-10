@@ -1,6 +1,6 @@
 import unicodedata
 from datetime import datetime
-import googlemaps
+# import googlemaps
 import spacy
 from django.db.models import Window
 from django.db.models import F
@@ -23,7 +23,7 @@ from uuid import UUID, uuid4
 from quantulum3 import parser
 from ingredient_parser.en import parse
 from django.shortcuts import render
-import pandas as pd
+# import pandas as pd
 import requests
 import re
 from .secrets import openai
@@ -1567,89 +1567,89 @@ def extract_lat_lon(gmaps_link):
 # markets in Whisk App functionality  APIs ################################
 
 
-@api_view(['POST'])
-def check_availability(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        names = data['listOfItemsNames']
-        user_lat = float(data['userLat'])
-        user_lon = float(data['userLon'])
-
-        lower_names = [name.lower() for name in names]
-
-        # get the list of "items objects" that match the names with the lower_names
-        items = Item.objects.filter(name__in=lower_names)
-
-        markets = Market.objects.all()
-
-        # create a list of MarketItems objects that appends the name and status of each item
-        market_items = []
-        for market in markets:
-
-            items_available = MarketItem.objects.filter(marketID=market, itemID__in=items)
-            item_names_available = list(items_available.values_list('itemID__name', flat=True))
-            list_of_available_items = []
-            i = 0
-            for lower_name in lower_names:
-                list_of_available_items.append(
-                    {
-                        "itemName": names[i],
-                        "isAvailable": lower_name in [item.lower() for item in item_names_available],
-                    }
-                )
-                i += 1
-
-            item_ids = [item.itemID_id for item in items_available]
-            num_available = len(item_ids)
-            market_lat, market_lon = extract_lat_lon(market.location)
-
-            # set connection with go-ogle api using api key
-            gmaps_client = googlemaps.Client(key='AIzaSyBTSe2uK5-e9aS35lkm5sz_y3z3AF67H0w')
-            source = f'{user_lat},{user_lon}'
-            destination = f'{market_lat},{market_lon}'
-
-            # get all info distance matrix
-            direction_result = gmaps_client.directions(source,
-                                                       destination,
-                                                       mode="driving",
-                                                       avoid="ferries",
-                                                       departure_time=datetime.now(),
-                                                       transit_mode='car')
-            dists = direction_result[0]['legs'][0]['distance']
-            dist = dists['text']
-
-            market_items.append({
-                'marketName': market.name,
-                'marketLogo': market.logo,
-                'marketLat': str(market_lat),
-                'marketLon': str(market_lon),
-                'locationLink': market.location,
-                'distance': dist,
-                'distanceValue': dists['value'],
-                'numAvailableItems': num_available,
-                'availableItems': list_of_available_items
-            })
-
-        # Sort the market_items list based on numAvailableItems (descending) and then distance (ascending)
-        market_items.sort(key=lambda x: (-x['numAvailableItems'], x['distanceValue']))
-
-        new_market_items = []
-
-        for m in market_items:
-            new_market_items.append({
-                'marketName': m['marketName'],
-                'marketLogo': m['marketLogo'],
-                'marketLat': m['marketLat'],
-                'marketLon': m['marketLon'],
-                'locationLink': m['locationLink'],
-                'distance': m['distance'],
-                'numAvailableItems': m['numAvailableItems'],
-                'availableItems': m['availableItems'],
-            })
-
-        return Response(new_market_items, status=status.HTTP_200_OK)
-    else:
-        return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
+# @api_view(['POST'])
+# def check_availability(request):
+#     if request.method == 'POST':
+#         data = json.loads(request.body)
+#         names = data['listOfItemsNames']
+#         user_lat = float(data['userLat'])
+#         user_lon = float(data['userLon'])
+#
+#         lower_names = [name.lower() for name in names]
+#
+#         # get the list of "items objects" that match the names with the lower_names
+#         items = Item.objects.filter(name__in=lower_names)
+#
+#         markets = Market.objects.all()
+#
+#         # create a list of MarketItems objects that appends the name and status of each item
+#         market_items = []
+#         for market in markets:
+#
+#             items_available = MarketItem.objects.filter(marketID=market, itemID__in=items)
+#             item_names_available = list(items_available.values_list('itemID__name', flat=True))
+#             list_of_available_items = []
+#             i = 0
+#             for lower_name in lower_names:
+#                 list_of_available_items.append(
+#                     {
+#                         "itemName": names[i],
+#                         "isAvailable": lower_name in [item.lower() for item in item_names_available],
+#                     }
+#                 )
+#                 i += 1
+#
+#             item_ids = [item.itemID_id for item in items_available]
+#             num_available = len(item_ids)
+#             market_lat, market_lon = extract_lat_lon(market.location)
+#
+#             # set connection with go-ogle api using api key
+#             gmaps_client = googlemaps.Client(key='AIzaSyBTSe2uK5-e9aS35lkm5sz_y3z3AF67H0w')
+#             source = f'{user_lat},{user_lon}'
+#             destination = f'{market_lat},{market_lon}'
+#
+#             # get all info distance matrix
+#             direction_result = gmaps_client.directions(source,
+#                                                        destination,
+#                                                        mode="driving",
+#                                                        avoid="ferries",
+#                                                        departure_time=datetime.now(),
+#                                                        transit_mode='car')
+#             dists = direction_result[0]['legs'][0]['distance']
+#             dist = dists['text']
+#
+#             market_items.append({
+#                 'marketName': market.name,
+#                 'marketLogo': market.logo,
+#                 'marketLat': str(market_lat),
+#                 'marketLon': str(market_lon),
+#                 'locationLink': market.location,
+#                 'distance': dist,
+#                 'distanceValue': dists['value'],
+#                 'numAvailableItems': num_available,
+#                 'availableItems': list_of_available_items
+#             })
+#
+#         # Sort the market_items list based on numAvailableItems (descending) and then distance (ascending)
+#         market_items.sort(key=lambda x: (-x['numAvailableItems'], x['distanceValue']))
+#
+#         new_market_items = []
+#
+#         for m in market_items:
+#             new_market_items.append({
+#                 'marketName': m['marketName'],
+#                 'marketLogo': m['marketLogo'],
+#                 'marketLat': m['marketLat'],
+#                 'marketLon': m['marketLon'],
+#                 'locationLink': m['locationLink'],
+#                 'distance': m['distance'],
+#                 'numAvailableItems': m['numAvailableItems'],
+#                 'availableItems': m['availableItems'],
+#             })
+#
+#         return Response(new_market_items, status=status.HTTP_200_OK)
+#     else:
+#         return JsonResponse({'message': 'this API is POST API '}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # Apis Just for testing :
