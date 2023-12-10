@@ -24,7 +24,15 @@ SECRET_KEY = 'django-insecure-=!s2$%vaa+ezb&6h@2j&(h37u#bx5t(5$l7!4isya4xrw)4u9o
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['https://www.whiskapps.com', '127.0.0.1', 'whiskapps.com', 'www.whiskapps.com', '84.152.73.81']
+ALLOWED_HOSTS = [
+    'https://www.whiskapps.com',
+    '127.0.0.1',
+    'whiskapps.com',
+    'www.whiskapps.com',
+    '84.152.73.81',
+    'https://www.recipe-jar.com',
+    'www.recipe-jar.com'
+]
 CSRF_TRUSTED_ORIGINS = ['https://whiskapps.com', 'https://127.0.0.1:8000']
 
 # Application definition
