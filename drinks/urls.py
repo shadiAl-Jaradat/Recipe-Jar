@@ -35,7 +35,7 @@ urlpatterns = [
     path('renameShoppingListCategory/', views.rename_shopping_list_category),
     path('getAllShoppingListCategory/', views.get_all_shopping_list_categories),
     path('getShoppingListItems/', views.get_shopping_list_items),
-    path('checkAvailability/', views.check_availability),
+    # path('checkAvailability/', views.check_availability),
     # Shopping List Item
     path('addNewItemToShoppingList/', views.add_new_shopping_list_item),
     path('toggleItemsStatus/', views.toggle_items_status),
