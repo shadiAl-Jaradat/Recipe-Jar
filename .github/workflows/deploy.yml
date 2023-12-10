@@ -1,0 +1,24 @@
+name: Build and Deploy
+
+on:
+  push:
+    branched: ['main']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+  steps:
+    - name: Deploy Django Project
+      uses: actions/checkout@v3
+      with:
+        host: ${{secrets.SSH_HOST}}
+        key: ${{secrets.SSH_KEY}}
+        username: ${{secrets.SSH_USERNAME}}
+
+      script: |
+        mkdir recipe-jar
+        cd recipe-jar
+        git clone git@github.com:Abdulhafeez012/Recipe-Jar.git
+        echo 'Deployment Via Digital Ocean Successfully"
+  
+        

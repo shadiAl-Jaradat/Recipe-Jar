@@ -3,3 +3,4 @@ drinks/migrations/
 error.log
 output.log
 secrets.py
+venv
