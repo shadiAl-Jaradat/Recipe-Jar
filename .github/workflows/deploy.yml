@@ -2,14 +2,14 @@ name: Build and Deploy
 
 on:
   push:
-    branched: ['main']
+    branched: 'main'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
   steps:
     - name: Deploy Django Project
-      uses: actions/checkout@v3
+      uses: appleboy/ssh-action@v.0.1.2
       with:
         host: ${{secrets.SSH_HOST}}
         key: ${{secrets.SSH_KEY}}
